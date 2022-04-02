@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>For(;;);</title>
+  <icon>https://blog.d0zingcat.dev/icon.png</icon>
+  <subtitle>d0zingcat&#39;s cabin</subtitle>
+  <link href="https://blog.d0zingcat.dev/atom.xml" rel="self"/>
+  
+  <link href="https://blog.d0zingcat.dev/"/>
+  <updated>2022-04-02T09:41:28.908Z</updated>
+  <id>https://blog.d0zingcat.dev/</id>
+  
+  <author>
+    <name>d0zingcat</name>
+    
+  </author>
+  
+  <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>Hello World</title>
+    <link href="https://blog.d0zingcat.dev/2022/04/02/hello-world/"/>
+    <id>https://blog.d0zingcat.dev/2022/04/02/hello-world/</id>
+    <published>2022-04-02T09:41:28.908Z</published>
+    <updated>2022-04-02T09:41:28.908Z</updated>
+    
+    
+      
+      
+        
+        
+    <summary type="html">&lt;p&gt;Welcome to &lt;a href=&quot;https://hexo.io/&quot;&gt;Hexo&lt;/a&gt;! This is your very first post. Check &lt;a href=&quot;https://hexo.io/docs/&quot;&gt;documentation&lt;/a&gt;</summary>
+        
+      
+    
+    
+    
+    
+  </entry>
+  
+  <entry>
+    <title>全新的博客</title>
+    <link href="https://blog.d0zingcat.dev/2022/03/22/new-blog-new-start/"/>
+    <id>https://blog.d0zingcat.dev/2022/03/22/new-blog-new-start/</id>
+    <published>2022-03-22T03:07:30.000Z</published>
+    <updated>2022-04-02T09:41:28.908Z</updated>
+    
+    
+      
+      
+        
+        
+    <summary type="html">&lt;blockquote&gt;
+&lt;p&gt;好久没有写博客了，可能是懒惰也可能是生疏导致的，但是客观地来讲并不是一个很好的现象，因为知识是网状的需要总结需要成体系的。当然也不是所有的内容都适合被结构化，也有一些其他的有意思的但是值得被记录下来的东西。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p</summary>
+        
+      
+    
+    
+    
+    
+    <category term="Journal" scheme="https://blog.d0zingcat.dev/tags/Journal/"/>
+    
+  </entry>
+  
+</feed>

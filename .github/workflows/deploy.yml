@@ -22,7 +22,6 @@ jobs:
           submodules: true
           fetch-depth: 0
 
-
       #- name: Copy theme config
         #env:
           #GITALK_SECERT: ${{ secrets.GITALK_SECERT }}
@@ -36,19 +35,6 @@ jobs:
           #node-version: '14'
           #cache: 'npm'
 
-      #- name: Cache npm dependencies
-        #uses: actions/cache@v2
-        #with:
-          #path: '~/.npm'
-          #key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          #restore-keys: |
-            #${{ runner.os }}-node-
-
-      # 安装依赖
-      #- name: Install dependencies
-        #run: |
-          #npm install
-          
       # 从之前设置的 secret 获取部署私钥
       - name: Set up environment
         env:
@@ -87,3 +73,19 @@ jobs:
           github_token: ${{ secrets.PAGES_TOKEN }}
           publish_dir: ./public
           publish_branch: main
+      # 从之前设置的 secret 获取部署私钥
+      - name: Set up environment
+        env:
+          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+        run: |
+          sudo timedatectl set-timezone "Asia/Shanghai"
+          mkdir -p ~/.ssh
+          echo "$DEPLOY_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+      ## 生成并部署
+      #- name: Deploy
+        #run: |
+          #npx hexo deploy --generate
+

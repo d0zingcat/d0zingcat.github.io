@@ -22,12 +22,6 @@ jobs:
           submodules: true
           fetch-depth: 0
 
-      #- name: Checkout theme repo
-        #uses: actions/checkout@v2
-        #with:
-          #repository: ahonn/hexo-theme-even
-          #ref: master
-          #path: themes/even
 
       #- name: Copy theme config
         #env:

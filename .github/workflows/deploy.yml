@@ -1,48 +1,48 @@
-name: Hugo Deploy
+#name: Hugo Deploy
 
-on:
-  push:
-    branches:
-      - source
+#on:
+  #push:
+    #branches:
+      #- source
 
-env:
-  POST_ASSET_IMAGE_CDN: true
+#env:
+  #POST_ASSET_IMAGE_CDN: true
 
-jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest
+#jobs:
+  #build-and-deploy:
+    #runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          submodules: true
-          fetch-depth: 0
+    #steps:
+      #- name: Checkout
+        #uses: actions/checkout@v3
+        #with:
+          #submodules: true
+          #fetch-depth: 0
 
-      - name: Setup Hugo
-        uses: peaceiris/actions-hugo@v2
-        with:
-          hugo-version: '0.91.2'
-          # extended: true 
+      #- name: Setup Hugo
+        #uses: peaceiris/actions-hugo@v2
+        #with:
+          #hugo-version: '0.91.2'
+          ## extended: true 
 
-      - name: Cache Hugo Modules 
-        uses: actions/cache@v2
-        with:
-          path: /tmp/hugo_cache
-          key: ${{ runner.os }}-hugomod-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-hugomod-
+      #- name: Cache Hugo Modules 
+        #uses: actions/cache@v2
+        #with:
+          #path: /tmp/hugo_cache
+          #key: ${{ runner.os }}-hugomod-${{ hashFiles('**/go.sum') }}
+          #restore-keys: |
+            #${{ runner.os }}-hugomod-
 
-      - name: Build
-        run: hugo --minify
+      #- name: Build
+        #run: hugo --minify
 
-      - name: Create CNAME file
-        run: echo 'blog.d0zingcat.dev' > public/CNAME
+      #- name: Create CNAME file
+        #run: echo 'blog.d0zingcat.dev' > public/CNAME
 
-      - name: Deploy
-        uses: peaceiris/actions-gh-pages@v3
-        if: ${{ github.ref == 'refs/heads/source' }}
-        with:
-          github_token: ${{ secrets.PAGES_TOKEN }}
-          publish_dir: ./public
-          publish_branch: main
+      #- name: Deploy
+        #uses: peaceiris/actions-gh-pages@v3
+        #if: ${{ github.ref == 'refs/heads/source' }}
+        #with:
+          #github_token: ${{ secrets.PAGES_TOKEN }}
+          #publish_dir: ./public
+          #publish_branch: main

@@ -73,12 +73,23 @@ customJS = []
 # [params.applicationInsights]
 # connectionString = "connectionString"
 
+[params.giscus] # https://giscus.app
+repo = "d0zingcat/d0zingcat.github.io" # Repo where the comments will live
+repo_id = "R_kgDOH1Q2fQ" # Repo where the comments will live
+category = "General" # Repo where the comments will live
+category_id = "DIC_kwDOH1Q2fc4CQ4fY" # Repo where the comments will live
+mapping = "pathname" # How Utterances will match comment to page
+theme = "preferred_color_scheme" # What theme to use
+reactions_enabled = "1" # Enable reactions
+emit_metadata= "0" # Emit metadata
+lang = "en" # Language
+
 # If you want to implement a Content-Security-Policy, add this section
 [params.csp]
 childsrc = ["'self'"]
 fontsrc = ["'self'", "https://fonts.gstatic.com", "https://cdn.jsdelivr.net/"]
 formaction = ["'self'"]
-framesrc = ["'self'"]
+framesrc = ["'self'", "https://giscus.app/"]
 imgsrc = ["'self'"]
 objectsrc = ["'none'"]
 stylesrc = [
@@ -90,6 +101,7 @@ stylesrc = [
 scriptsrc = [
   "'self'",
   "'unsafe-inline'",
+  "https://giscus.app/",
   "https://www.google-analytics.com",
   "https://cdn.jsdelivr.net/"
 ]

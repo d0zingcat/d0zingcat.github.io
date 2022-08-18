@@ -135,9 +135,15 @@ url = "https://twitter.com/d0zingcat/"
 
 [[params.social]]
 name = "Douban"
-icon = "fa fa-2x fa-book"
+icon = "fa fa-2x fa-gamepad"
 weight = 3
 url = "https://www.douban.com/people/195979468/"
+
+[[params.social]]
+name = "Reading"
+icon = "fa fa-2x fa-newspaper-o"
+weight = 3
+url = "https://bronze-leotard-a0f.notion.site/f523bb3aa9be4a7e8b6bd3906dff6edf?v=7e754a5eb6a541179851c4b46c05e1c4"
 
 [[params.social]]
 name = "RSS"

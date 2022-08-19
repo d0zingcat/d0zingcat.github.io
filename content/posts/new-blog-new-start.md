@@ -35,6 +35,7 @@ series = []
 # 参考
 
 [使用 GitHub Actions 自动部署 Hexo 博客][1]
+
 [Override Archetypes][6]
 
 [1]: https://printempw.github.io/use-github-actions-to-deploy-hexo-blog/

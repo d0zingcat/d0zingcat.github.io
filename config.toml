@@ -73,17 +73,6 @@ customJS = []
 # [params.applicationInsights]
 # connectionString = "connectionString"
 
-[params.giscus] # https://giscus.app
-repo = "d0zingcat/d0zingcat.github.io" # Repo where the comments will live
-repo_id = "R_kgDOH1Q2fQ" # Repo where the comments will live
-category = "General" # Repo where the comments will live
-category_id = "DIC_kwDOH1Q2fc4CQ4fY" # Repo where the comments will live
-mapping = "pathname" # How Utterances will match comment to page
-theme = "preferred_color_scheme" # What theme to use
-reactions_enabled = "1" # Enable reactions
-emit_metadata= "0" # Emit metadata
-lang = "en" # Language
-
 # If you want to implement a Content-Security-Policy, add this section
 [params.csp]
 childsrc = ["'self'"]
@@ -114,6 +103,18 @@ category = "categories"
 series = "series"
 tag = "tags"
 author = "authors"
+
+[params.giscus] # https://giscus.app
+repo = "d0zingcat/d0zingcat.github.io" # Repo where the comments will live
+repo_id = "R_kgDOH1Q2fQ" # Repo where the comments will live
+category = "General" # Repo where the comments will live
+category_id = "DIC_kwDOH1Q2fc4CQ4fY" # Repo where the comments will live
+mapping = "pathname" # How Utterances will match comment to page
+theme = "preferred_color_scheme" # What theme to use
+reactions_enabled = "1" # Enable reactions
+emit_metadata= "0" # Emit metadata
+lang = "en" # Language
+input_position = "top" # Input position
 
 [[params.social]]
 name = "Github"

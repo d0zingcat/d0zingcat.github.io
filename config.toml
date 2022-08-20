@@ -79,7 +79,7 @@ childsrc = ["'self'"]
 fontsrc = ["'self'", "https://fonts.gstatic.com", "https://cdn.jsdelivr.net/"]
 formaction = ["'self'"]
 framesrc = ["'self'", "https://giscus.app/"]
-imgsrc = ["'self'"]
+imgsrc = ["'self'", "https://space.d0zingcat.dev/"]
 objectsrc = ["'none'"]
 stylesrc = [
   "'self'",

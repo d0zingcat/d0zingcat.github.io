@@ -1,15 +1,14 @@
-+++ 
-draft = false
-date = 2022-03-22T07:58:57+08:00
-title = "新的博客"
-description = ""
-slug = "new-blog-new-start"
-authors = ["d0zingcat"]
-tags = ["Journal"]
-categories = ["Journal"]
-externalLink = ""
-series = []
-+++
+---
+draft: false
+date: 2022-03-22T07:58:57+08:00
+title: 新的博客
+description:
+slug: new-blog-new-start
+categories: 
+    - Journal
+tags: 
+    - misc
+---
 
 > 好久没有写博客了，可能是懒惰也可能是生疏导致的，但是客观地来讲并不是一个很好的现象，因为知识是网状的需要总结需要成体系的。当然也不是所有的内容都适合被结构化，也有一些其他的有意思的但是值得被记录下来的东西。
 

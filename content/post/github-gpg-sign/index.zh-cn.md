@@ -1,19 +1,19 @@
-+++ 
-draft = false
-date = 2022-08-19T17:09:08+08:00
-title = "如何给Github commit启用GPG Sign签名"
-description = ""
-slug = "how-to-enbale-gpg-sign-for-github"
-authors = ["d0zingcat"]
-tags = ["Tutorial"]
-categories = ["Tutorial"]
-externalLink = ""
-series = []
-+++
+---
+draft: false
+date: 2022-08-19T17:09:08+08:00
+title: 如何给Github commit启用GPG Sign签名
+description:
+slug: how-to-enbale-gpg-sign-for-github
+categories:
+    - Tutorial
+tags:
+    - github
+    - bash
+---
 
 ## 添加签名
 如果实现了GPG Sign签名，那么你在Github上面的提交应该是像这个样子的：
-![](https://space.d0zingcat.dev/public/images/gpg-sign-github.png)
+![](gpg-sign-github.png)
 
 首先你应该把Github官方的文档（左边栏关于添加GPG签名的所有文档）都通读或者操作一遍：[Commit signature verification][1] 。因为所有你可能会遇到的情况 github 都已经很贴心地写了文档，而且这些文档都非常地简单易懂。
 然后你就可以仿照下面提到命令进行操作：

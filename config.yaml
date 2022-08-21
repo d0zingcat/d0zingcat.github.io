@@ -1,8 +1,7 @@
 baseURL: https://blog.d0zingcat.dev/
-languageCode: en-us
+languageCode: zh-cn
 title: For(;;)
 theme: hugo-theme-stack
-defaultContentLanguage: en
 paginate: 20
 languages:
     en:

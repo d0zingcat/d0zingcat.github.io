@@ -21,7 +21,9 @@ tags:
 3. .dev 更复合我开发的身份。
 4. 域名包括博客和内容，每次我重新调整的时候基本是一个全新的开始，是一个美好的祈愿，也是对自己的一种鼓励和鞭策。
 
-如果关注想知道我怎么部署的，不如参考我的仓库吧：[d0zingcat.github.io][2] 。这个仓库实现了自动打包发布到 Github Pages 和 [Fleek][4] 上，主要还是根据官方的一些教程进行操作的，不是很难，如果没有特别的需要不会展开写怎么设置这些。另外，如果你很感兴趣的话，可以访问我部署在 IPFS 上的博客，和这个博客是镜像： [d0zingcat.eth.limo][3] 。值得一提的是，部署在 fleek 上配置好对应的 ENS 域名之后，会同时获得三个域名： `xxx.on.fleek.co`, `xxx.eth.link`, `xxx.eth.limo`。例如V神的博客地址就是 [vitalik.eth.limo][5]。和V神一起做邻居的感觉真好。
+如果关注想知道我怎么部署的，不如参考我的仓库吧：[d0zingcat.github.io][2] 。这个仓库实现了自动打包发布到 Github Pages 和 [Fleek][4] 上，主要还是根据官方的一些教程进行操作的，不是很难，如果没有特别的需要不会展开写怎么设置这些。另外，如果你很感兴趣的话，可以访问我部署在 IPFS 上的博客，和这个博客是镜像： [d0zingcat.eth.limo][3] 。部署在Fleek上有两个注意点： `Settings-Build Settings` 中设置`Build Command` 为 `git submodule update --recursive && hugo`，而 `Advanced Build Settings-Specify Docker Image` 则使用 `shawnoster/hugo-extended-for-fleek:99.0` 这个镜像，因为我的主题用了`Sass/SCSS` 需要`hugo-extended` 才能支持生成。
+
+值得一提的是，部署在 fleek 上配置好对应的 ENS 域名之后，会同时获得三个域名： `xxx.on.fleek.co`, `xxx.eth.link`, `xxx.eth.limo`。例如V神的博客地址就是 [vitalik.eth.limo][5]。和V神一起做邻居的感觉真好。
 
 这次重新开始我准备做出几个比较大的改变：
 1. 少说废话

@@ -4,11 +4,8 @@ date: 2022-08-19T17:09:08+08:00
 title: 如何给Github commit启用GPG Sign签名
 description:
 slug: how-to-enbale-gpg-sign-for-github
-categories:
-    - Tutorial
-tags:
-    - github
-    - bash
+categories: ['Tutorial']
+tags: ['github', 'bash', 'mac', 'terminal', 'unix']
 ---
 
 ## 添加签名

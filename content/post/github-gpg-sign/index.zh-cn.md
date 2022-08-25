@@ -51,6 +51,7 @@ brew install pinentry-mac
 [backup-and-restore-a-gpg-key][6]
 
 [How to backup gpg keys on paper][7]
+
 [Setting up a GPG verification on the GitHub][8]
 
 [GPG: Change email for key in PGP key servers][9]

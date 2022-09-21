@@ -33,10 +33,22 @@ brew install pinentry-mac
 
 ## 备份及还原
 
-可以顺带一提的是 GPG 的备份，可以简单通过：`gpg --export-secret-keys --armor --output privkey.asc user-id` 进行备份，`--armor`的意思是转换二进制为可读的文字，这样可以方便打印出来，也可以转换成二维码之后再打印出来，因为最好的备份方式还是物理备份（如果这张纸不幸被偷那么另说）。我的话是直接丢在云盘上面的，这个可能是我盲目自信了。
+可以顺带一提的是 GPG 的备份，可以简单通过：`gpg --export-secret-keys --armor --output privkey.asc user-id` 进行备份，`--armor`的意思是转换二进制为可读的文字，这样可以方便打印出来，也可以转换成二维码之后再打印出来，因为最好的备份方式还是物理备份（如果这张纸不幸被偷那么另说）。我的话是直接丢在 Google Drive 上面的，这个可能是我盲目自信了。
 
-我还没有还原过，不过根据资料是这样的：`gpg --import privkey.asc`
+根据资料是这样的：`gpg --import privkey.asc`
 应该还需要一些信任的操作，可以具体查询下面提供的参考资料。
+
+
+## 补充
+
+事实上，1Password这个密码管理器已经支持了 SSH 的托管，而 Github 也已经支持了 SSH Commit Signing，换言之也可以直接通过更加现代化和安全的方式来做commit的签名，具体可以参考：
+
+[SSH commit verification now supported][10]
+
+[git commit signing][11]
+
+[1Password for SSH & Git][12]
+
 
 # 参考
 
@@ -65,3 +77,6 @@ brew install pinentry-mac
 [7]: https://linuxconfig.org/how-to-backup-gpg-keys-on-paper
 [8]: https://codex.so/gpg-verification-github
 [9]: https://coderwall.com/p/tx_1-g/gpg-change-email-for-key-in-pgp-key-servers
+[10]: https://github.blog/changelog/2022-08-23-ssh-commit-verification-now-supported/
+[11]: https://blog.1password.com/git-commit-signing/
+[12]: https://developer.1password.com/docs/ssh/

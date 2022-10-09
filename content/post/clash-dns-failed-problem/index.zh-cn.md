@@ -55,7 +55,7 @@ dns:
   - "*.binance.com"
 ```
 
-根据这个帖子[[疑问]有关clash dns 解析中fallback组的意义的疑问](https://github.com/Dreamacro/clash/issues/968) 可以明白clash的解析逻辑是并发请求`nameserver`和`fallback`中的所有的dns服务器，拿到最快的一个结果看是否是的CN的IP，如果不是则返回`fallback`中的解析最快的一个的结果（不是很理解这个逻辑，如果这样的话`fallback`被投毒（不确定可行性）或者连不通不就会导致代理存在问题么？就像我这次碰到的问题一样）。telnet一下可以发现确实在江苏无法正常连通 `1.1.1.1` 这个IP的53端口，至此问题已经确认，那么需要做的就很简单，通过查阅一些别人的配置我在`fallback` 中新增了两个 DNS 服务： 
+根据这个帖子[^1]可以明白clash的解析逻辑是并发请求`nameserver`和`fallback`中的所有的dns服务器，拿到最快的一个结果看是否是的CN的IP，如果不是则返回`fallback`中的解析最快的一个的结果（不是很理解这个逻辑，如果这样的话`fallback`被投毒（不确定可行性）或者连不通不就会导致代理存在问题么？就像我这次碰到的问题一样）。telnet一下可以发现确实在江苏无法正常连通 `1.1.1.1` 这个IP的53端口，至此问题已经确认，那么需要做的就很简单，通过查阅一些别人的配置我在`fallback` 中新增了两个 DNS 服务： 
 
 ```plain
 dns:
@@ -76,26 +76,40 @@ dns:
 再次尝试之后发现果然在江苏不论是哪个节点都可以正常翻墙，且访问速度非常快，所有网页都能很快打开。
 
 # 参考
-[记一次解决 clash all DNS requests failed, context deadline exceeded 问题](https://hellodk.cn/post/870)
+[记一次解决 clash all DNS requests failed, context deadline exceeded 问题][2]
 
-[# [疑问]dns中fallback的作用](https://github.com/Dreamacro/clash/issues/642)
+[[疑问]dns中fallback的作用][3]
 
-[在 Clash 中 DNS 解析行为和 fallback-filter 的一点理解](https://cosey.me/p/clash-fallback-filter.html)
+[在 Clash 中 DNS 解析行为和 fallback-filter 的一点理解][4]
 
-[浅谈在代理环境中的 DNS 解析行为](https://blog.skk.moe/post/what-happend-to-dns-in-proxy/)
+[浅谈在代理环境中的 DNS 解析行为][5]
 
-[DNS污染对Clash（for Windows）的影响](https://github.com/Fndroid/clash_for_windows_pkg/wiki/DNS%E6%B1%A1%E6%9F%93%E5%AF%B9Clash%EF%BC%88for-Windows%EF%BC%89%E7%9A%84%E5%BD%B1%E5%93%8D)
+[DNS污染对Clash（for Windows）的影响][6]
 
-[# [Feature]希望可以由用户显式设置 Nameserver 和 Fallback DNS 是否通过代理来解析域名 #857](https://github.com/Dreamacro/clash/issues/857)
+[[Feature]希望可以由用户显式设置 Nameserver 和 Fallback DNS 是否通过代理来解析域名 #857][7]
 
-[clash添加doh解析](https://s1oz.github.io/post/clash-tian-jia-doh-jie-xi/)
+[clash添加doh解析][8]
 
-[DNS设置](https://github.com/vernesong/OpenClash/wiki/DNS%E8%AE%BE%E7%BD%AE)
+[DNS设置][9]
 
-[[Feature] 添加根据CNAME指向的FQDN匹配规则](https://github.com/Dreamacro/clash/issues/621#issuecomment-614702773) 
+[[Feature] 添加根据CNAME指向的FQDN匹配规则][10]
 
-[# Home](https://github.com/Dreamacro/clash/wiki)
+[Home][11]
 
-[DNS](https://lancellc.gitbook.io/clash/clash-config-file/dns)
+[DNS][12]
 
 
+[^1]: [[疑问]有关clash dns 解析中fallback组的意义的疑问][1]
+
+[1]: https://github.com/Dreamacro/clash/issues/968
+[2]: https://hellodk.cn/post/870
+[3]: https://github.com/Dreamacro/clash/issues/642
+[4]: https://cosey.me/p/clash-fallback-filter.html
+[5]: https://blog.skk.moe/post/what-happend-to-dns-in-proxy/
+[6]: https://github.com/Fndroid/clash_for_windows_pkg/wiki/DNS%E6%B1%A1%E6%9F%93%E5%AF%B9Clash%EF%BC%88for-Windows%EF%BC%89%E7%9A%84%E5%BD%B1%E5%93%8D
+[7]: https://github.com/Dreamacro/clash/issues/857
+[8]: https://s1oz.github.io/post/clash-tian-jia-doh-jie-xi/
+[9]: https://github.com/vernesong/OpenClash/wiki/DNS%E8%AE%BE%E7%BD%AE
+[10]: https://github.com/Dreamacro/clash/issues/621#issuecomment-614702773
+[11]: https://github.com/Dreamacro/clash/wiki
+[12]: https://lancellc.gitbook.io/clash/clash-config-file/dns

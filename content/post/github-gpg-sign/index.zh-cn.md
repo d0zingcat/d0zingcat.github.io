@@ -12,7 +12,7 @@ tags: ['github', 'bash', 'mac', 'terminal', 'unix']
 如果实现了GPG Sign签名，那么你在Github上面的提交应该是像这个样子的：
 ![](https://space.d0zingcat.dev/public/images/gpg-sign-github.png)
 
-首先你应该把Github官方的文档（左边栏关于添加GPG签名的所有文档）都通读或者操作一遍：[Commit signature verification][1] 。因为所有你可能会遇到的情况 github 都已经很贴心地写了文档，而且这些文档都非常地简单易懂。
+首先你应该把Github官方的文档（左边栏关于添加GPG签名的所有文档）都通读或者操作一遍[^1] 。因为所有你可能会遇到的情况 github 都已经很贴心地写了文档，而且这些文档都非常地简单易懂。
 然后你就可以仿照下面提到命令进行操作：
 
 ```bash
@@ -68,6 +68,8 @@ brew install pinentry-mac
 
 [GPG: Change email for key in PGP key servers][9]
 
+[^1]: [Commit signature verification][1]
+
 [1]: https://docs.github.com/en/authentication/managing-commit-signature-verification/about-commit-signature-verification
 [2]: https://gist.github.com/troyfontaine/18c9146295168ee9ca2b30c00bd1b41e
 [3]: https://wiki.archlinux.org/title/GnuPG_(%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87)#%E5%A4%87%E4%BB%BD%E4%BD%A0%E7%9A%84%E7%A7%81%E9%92%A5
@@ -80,3 +82,4 @@ brew install pinentry-mac
 [10]: https://github.blog/changelog/2022-08-23-ssh-commit-verification-now-supported/
 [11]: https://blog.1password.com/git-commit-signing/
 [12]: https://developer.1password.com/docs/ssh/
+

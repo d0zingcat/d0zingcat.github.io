@@ -9,7 +9,7 @@ hidden: false
 comments: true
 categories: ['Tutorial']
 tags: ['wireguard', 'vpn']
-draft: true
+draft: false
 ---
 
 # 写在前面
@@ -34,7 +34,7 @@ zerotier是虚拟组网，但是在国内planet节点都被屏蔽了，UDP也被
 
 经过规划之后，我的网段的划分如下：
 
-```
+```plain
                                      +------------------------------+
                                      |           Work               |
                                      |    +---------------------+   |
@@ -58,8 +58,8 @@ zerotier是虚拟组网，但是在国内planet节点都被屏蔽了，UDP也被
 |                               |       |                   |      |   +---------------------+  |
 |    +-----------------+        |       |       wg          |      |   |   Macbook pro       |  |
 |    |    Jumper       |        |       |                   |      |   |                     |  |
-|    |                 |        +-------+                   +------+   |  172.30.0.4 wg      |  |
-|    |  172.30.0.2 wg  |        |       |     172.30.0.1    |      |   |                     |  |
+|    |                 |        +-------+                   +------+   |  172.30.0.2 wg      |  |
+|    |  172.30.0.4 wg  |        |       |     172.30.0.1    |      |   |                     |  |
 |    |                 |        |       |                   |      |   |  192.168.2.X/24     |  |
 |    |                 |        |       +---------+---------+      |   |                     |  |
 |    |                 |        |                 |                |   |  10.0.0.X/24        |  |
@@ -77,9 +77,81 @@ zerotier是虚拟组网，但是在国内planet节点都被屏蔽了，UDP也被
 |                               |       |                    |     |                            |
 +-------------------------------+       +--------------------+     +----------------------------+
 ```
+其实结构很简单，所有的机器流量都通过腾讯云的轻量云服务器（有公网IP）进行转发，以此来联通工作、家庭、携带设备的网络。满足这个需求的配置可以参考下面的教程：
+[使用 WireGuard 无缝接入内网](https://devld.me/2020/07/27/wireguard-setup/)
 
-# 思考
+关于具体的步骤不进行赘述,只是需要注意一下公网的服务器检查一下云厂商的防火墙是否放行(wireguard是UDP)，服务器、局域网转发服务器（如果有和我同样的需求）的iptables是否放行，服务器是否开启iv4的转发。
+这边仅贴出我的配置：
 
-可以发现，wireguard并不适合大规模的组网，因为配置起来太过于麻烦（尤其是不做公网IP的服务器作为流量中转的情况下，每新增一个peer之前的服务器都得再配置一次），也不支持NAT打洞，更加不支持自适应的流量转发、多节点作为流量中转的场景，要实现这些能力还是得看zerotier（可能tailscale也可以做到，但是并没有做调研）。不过考虑到自己的需求也非常有限，就继续保持这套方案跑着了，结构简单也好维护。
+**公网服务器**
 
-因为我的家庭网络是有公网IP的，所以也有在思考也许可以携带区的电脑、工作区的电脑可以直接和Jumper P2P相连（Jumper的Endpoint通过openwrt的端口转发暴露在公网上），以此来实现绕过流量代理服务器（毕竟有上限，比如我的是4M上行）。
+```ini
+[Interface]
+# Name = qcloud
+Address = 172.30.0.1/24
+ListenPort = 31820
+PrivateKey = ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789
+
+[Peer]
+#Name = macbookpro
+PublicKey = ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789
+AllowedIPs = 172.30.0.2/32
+
+[Peer]
+#Name = macbookair
+PublicKey = ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789
+AllowedIPs = 172.30.0.3/32
+
+[Peer]
+#Name = debian.lan
+PublicKey = ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789
+AllowedIPs = 172.30.0.4/32
+AllowedIPs = 192.168.2.1/24
+```
+
+**内网转发机**
+```ini
+[Interface]
+PrivateKey = ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789
+Address = 172.30.0.4/32
+ListenPort = 31820
+
+PostUp = iptables -t nat -A POSTROUTING -s 172.30.0.0/24 -j MASQUERADE
+PostDown = iptables -t nat -D POSTROUTING -s 172.30.0.0/24 -j MASQUERADE
+
+[Peer]
+PublicKey = ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789
+AllowedIPs = 172.30.0.0/24
+Endpoint = 101.43.1.1:31820
+PersistentKeepalive = 25
+
+```
+
+**其他机器，以携带行型设备为例**
+```ini
+[Interface]
+PrivateKey = ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789
+Address = 172.30.0.2/32
+
+[Peer]
+PublicKey = ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789
+AllowedIPs = 172.30.0.0/24
+AllowedIPs = 192.168.2.0/24
+Endpoint = 101.43.1.1:31820
+
+```
+值得一提的是在Jumper机上需要添加两条iptables的规则：
+```ini
+PostUp = iptables -t nat -A POSTROUTING -s 172.30.0.0/24 -j MASQUERADE
+PostDown = iptables -t nat -D POSTROUTING -s 172.30.0.0/24 -j MASQUERADE
+
+```
+PostUp表示为在wg0的虚拟网卡上线、添加完路由之后会自动执行的hook，PostDown则是wg0虚拟网卡下线移除完路由的时候自动执行的hook，这台机器的主要作用是对于`172.30.0.0/24`的网段的流量（转发到了这台机器），把流量转发到这台机器的网卡上，然后转交到对应的dest上。如果没有这个规则的化流量转发到目标机器上之后无法找到回程的IP（比如网关192.168.2.1并不知道172.30.0.0/24具体是在什么位置，所以在包从Jumper机发出之前需要通过SNAT把source IP转换成本机的局域网IP。`MASQUERADE`等于`-j SNAT --to-source 192.168.2.5`，也就是会自动获取网卡的IP然后设置，也比较适合只有动态IP或者做了DDNS的机器。如果有多个网卡也可以用 `-o eth0` 指定出口网卡。关于SNAT和DNAT可以看[这个文章](https://www.xiexianbin.cn/linux/network/basic/dnat-and-snat/index.html)。同时也强烈推荐这个系列的教程[^1]，对于会有全新的理解。
+
+# 思考和改进
+
+可以发现，wireguard并不适合大规模的组网，因为配置起来太过于麻烦（尤其是不做公网IP的服务器作为流量中转的情况下，每新增一个peer之前的服务器都得再配置一次），也不支持NAT打洞，更加不支持自适应的流量转发、多节点作为流量中转的场景，要实现这些能力还是得看zerotier（可能tailscale也可以做到，但是我并没有做调研）。不过考虑到自己的需求也非常有限，就继续保持这套方案跑着了，结构简单也好维护。
+
+而我的家庭网络是有公网IP的，所以也有在思考也许可以携带区的电脑、工作区的电脑可以直接和Jumper P2P相连（Jumper的Endpoint通过openwrt的端口转发暴露在公网上），以此来实现绕过流量中转服务器（毕竟有上限，比如我的是4M上行）,但是这样就意味着Jumper机需要对特定的IP路由到特定的Peer，而网段中其他的IP则维持路由到中转服务器上。从方案上来讲看起来是可以操作的， 不过并没有实际去操作，也许会等实际需求产生的时候会再折腾。
+
+[^1]: [iptables](https://www.zsythink.net/archives/category/%e8%bf%90%e7%bb%b4%e7%9b%b8%e5%85%b3/iptables)

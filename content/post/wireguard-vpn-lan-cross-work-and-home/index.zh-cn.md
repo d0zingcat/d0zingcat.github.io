@@ -5,6 +5,7 @@ date: 2023-01-20T21:46:54+08:00
 image: 
 math: 
 license: 
+slug: wireguard-vpn-connect-work-home
 hidden: false
 comments: true
 categories: ['Tutorial']
@@ -147,6 +148,8 @@ PostDown = iptables -t nat -D POSTROUTING -s 172.30.0.0/24 -j MASQUERADE
 
 ```
 PostUp表示为在wg0的虚拟网卡上线、添加完路由之后会自动执行的hook，PostDown则是wg0虚拟网卡下线移除完路由的时候自动执行的hook，这台机器的主要作用是对于`172.30.0.0/24`的网段的流量（转发到了这台机器），把流量转发到这台机器的网卡上，然后转交到对应的dest上。如果没有这个规则的化流量转发到目标机器上之后无法找到回程的IP（比如网关192.168.2.1并不知道172.30.0.0/24具体是在什么位置，所以在包从Jumper机发出之前需要通过SNAT把source IP转换成本机的局域网IP。`MASQUERADE`等于`-j SNAT --to-source 192.168.2.5`，也就是会自动获取网卡的IP然后设置，也比较适合只有动态IP或者做了DDNS的机器。如果有多个网卡也可以用 `-o eth0` 指定出口网卡。关于SNAT和DNAT可以看[这个文章](https://www.xiexianbin.cn/linux/network/basic/dnat-and-snat/index.html)。同时也强烈推荐这个系列的教程[^1]，对于会有全新的理解。
+
+但这样的方案也是有缺陷的，如果这样一台电脑进入到了我的局域网，`192.168.2.0/24`的流量还会去公网上绕一圈回来在jumper上再转发一次，其实并不是很好的做法（因此这个规则其实比较适合公司的电脑（因为大多数情况下不会带回家）），而公司想要访问例如openwrt进行管理（http://192.168.2.1，例如远程帮家人调整翻墙的节点）就可以通过网址直接访问即可。
 
 # 思考和改进
 

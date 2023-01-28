@@ -3,8 +3,8 @@ title: "1password SSH Key 管理实践"
 description: 
 date: 2022-10-15T14:12:20+08:00
 slug: 1password-ssh-key-in-practice
-categories: ['Troubleshooting']
-tags: ['1password', 'ssh', 'git']
+categories: ['Tutorial']
+tags: ['1password', 'ssh', 'git', 'Github']
 draft: false
 ---
 

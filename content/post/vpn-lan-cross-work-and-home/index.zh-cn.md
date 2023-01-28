@@ -1,11 +1,11 @@
 ---
-title: "使用Wireguard组建局域网打通工作和家庭网络"
+title: "使用VPN组建局域网打通工作和家庭网络"
 description: 
 date: 2023-01-20T21:46:54+08:00
 image: 
 math: 
 license: 
-slug: wireguard-vpn-connect-work-home
+slug: vpn-connect-work-home
 hidden: false
 comments: true
 categories: ['Tutorial']

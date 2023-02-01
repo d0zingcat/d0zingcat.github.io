@@ -1,5 +1,6 @@
 ---
 title: "Clash DNS failed 问题解决"
+slug: clash-dns-failed-troubleshooting
 description: 
 date: 2022-10-08T12:38:24+08:00
 image: 

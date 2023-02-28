@@ -202,12 +202,12 @@ menu:
               icon: brand-twitter
           weight: 2
 
-        - identifier: douban
-          name: Douban
-          url: https://www.douban.com/people/195979468/
-          params:
-              icon: activity
-          weight: 3
+        # - identifier: douban
+        #   name: Douban
+        #   url: https://www.douban.com/people/195979468/
+        #   params:
+        #       icon: activity
+        #   weight: 3
 
         - identifier: home
           name: Home
@@ -216,13 +216,13 @@ menu:
               icon: brand-notion
           weight: 4
 
-        - identifier: reading
-          name: Reading
-          url: https://bronze-leotard-a0f.notion.site/f523bb3aa9be4a7e8b6bd3906dff6edf?v=7e754a5eb6a541179851c4b46c05e1c4
-          params:
-              icon: news
-          weight: 5
-
+        # - identifier: reading
+        #   name: Reading
+        #   url: https://bronze-leotard-a0f.notion.site/f523bb3aa9be4a7e8b6bd3906dff6edf?v=7e754a5eb6a541179851c4b46c05e1c4
+        #   params:
+        #       icon: news
+        #   weight: 5
+        #
         - identifier: rss
           name: RSS
           url: https://blog.d0zingcat.dev/index.xml

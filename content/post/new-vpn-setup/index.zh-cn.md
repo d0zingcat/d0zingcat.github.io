@@ -21,7 +21,7 @@ draft: false
 - 配置新账户
     - adduser 交互式添加
     - `usermod -aG sudo {username}`
-    - 免密登陆  `{username} ALL=(ALL) NOPASSWD: ALL`
+    - 免密登陆 `vim /etc/sudoers` Add `{username} ALL=(ALL) NOPASSWD: ALL`
     - 配置密钥登陆 `ssh-keygen`
         - 添加 `.ssh/authorized_keys`
         - 设置权限 `chmod 600 .ssh/authorized_keys`

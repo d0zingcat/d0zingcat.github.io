@@ -53,9 +53,12 @@ acme.sh --issue  --domain home.d0zingcat.xyz --dns dns_cf --server letsencrypt
 如果我发现有什么网站默认走了翻墙但是需要直连（默认策略是翻墙）的话，那么我就添加这个规则：https://gist.github.com/d0zingcat/20be92d69ae060281ff2eaae6fcfec41
 如果我发现什么app/网站监测了MITM和dns 或者做了什么特别的操作不是常规http请求的话，那么就添加这个fake-ip-filter：https://gist.github.com/d0zingcat/f2eab7420ce41f1b031e65e04fd71dbf
 
-我：全局了！我女票：网怎么这么慢！淘宝怎么访问不了了！爱奇艺怎么看不了了！
-我：全局了！招商银行：检测网络异常，禁止访问！
-我：全局了！机场/节点供应商：流量用完了！BT：我干的！
+我女票：网怎么这么慢！淘宝怎么访问不了了！爱奇艺怎么看不了了！
+我：全局了！
+招商银行：检测网络异常，禁止访问！
+我：全局了！
+机场/节点供应商：流量用完了！BT：我干的！
+我：全局了！
 
 
 还不能忘了 openclash 可能有规则，需要` mv openclash_custom_fake_filter.list openclash_custom_fake_filter.list.back` 才可以不覆盖 fake-ip-filter。（具体可以参考openclash的代码，都是shell和lua很好读）

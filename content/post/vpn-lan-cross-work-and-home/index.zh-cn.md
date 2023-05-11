@@ -13,6 +13,8 @@ tags: ['wireguard', 'vpn']
 draft: false
 ---
 
+> 本教程已经失效，只能作为参考，关于我最新的组网方法请参考这篇文章：[Tailscale Intro](https://blog.d0zingcat.dev/p/tailscale-intro/)
+
 # 写在前面
 
 没错，我又开始写教程了。非常排斥写教程的原因是：

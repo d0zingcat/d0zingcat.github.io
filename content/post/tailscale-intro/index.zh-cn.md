@@ -204,3 +204,5 @@ Report:
 # 参考
 
 [DNS in Tailscale](https://tailscale.com/kb/1054/dns/?tab=macos#using-dns-settings-in-the-admin-console)
+
+[MagicDNS](https://tailscale.com/kb/1081/magicdns/)

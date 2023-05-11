@@ -141,6 +141,7 @@ volumes:
 }
 
 ```
+
 保存之后挑选一台节点使用 `sudo tailscale netcheck` 即可发现已经自动连接了 derp 节点，而且速度非常感人
 
 ```
@@ -195,3 +196,11 @@ Report:
 ![](enable.png)
 
 换言之，这样我就可以在公司电脑上通过 192.168.2.111（假设是家中 mac 设备的ip地址）访问了。
+
+另外也推荐打开 Tailscale 的 MagicDNS 和 Nameserver 并启用 Overwrite local DNS，前者用于通过机器名称解析出内网 IP，后者用于强制 DNS 走公用可靠的服务，这样可以有效避免一些非验证 DNS 的错误记录导致的奇奇怪怪的网络问题。
+
+![](dns.png)
+
+# 参考
+
+[DNS in Tailscale](https://tailscale.com/kb/1054/dns/?tab=macos#using-dns-settings-in-the-admin-console)

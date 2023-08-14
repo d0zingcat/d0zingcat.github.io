@@ -40,16 +40,16 @@ draft: false
         - `net.ipv6.conf.all.forwarding = 1`
     - `sysctl -p` 生效
 - 配置gost
-    - `wget [https://github.com/go-gost/gost/releases/download/v3.0.0-rc7/gost_3.0.0-rc7_linux_amd64.tar.gz](https://github.com/go-gost/gost/releases/download/v3.0.0-rc7/gost_3.0.0-rc7_linux_amd64.tar.gz)`
+    - `wget https://github.com/go-gost/gost/releases/download/v3.0.0-rc7/gost_3.0.0-rc7_linux_amd64.tar.gz`
         - `tar zxvf xxx && mv gost /usr/local/bin`
     - wiki [`https://gost.run/tutorials/protocols/ss/`](https://gost.run/tutorials/protocols/ss/)
     - github `https://github.com/go-gost/gost`
 - 配置pm2
-    - `mkdir pm2 && pm2 init`
+    - `mkdir pm2 && cd pm2 && pm2 init`
     - 贴入关键配置 `gost -L ss+ssu://chacha20-ietf-poly1305:{password}@:8338`
     - `pm2 start`
-    - `pm2 save`
     - `pm2 startup`
+    - `pm2 save`
     - 配置log rotate
         
         ```bash

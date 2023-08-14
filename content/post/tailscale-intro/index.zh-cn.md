@@ -189,7 +189,11 @@ Report:
 
 当公司需要访问家中的 mac 设备的时候，限于 macOS 系统的机制会自动休眠，除非禁用休眠（太伤了，不利于电池也不利于续航，损耗太大），否则只剩下一条路，万幸 macOS 支持网络唤醒，换言之休眠不是问题，关键只要有一台局域网内的设备通过局域网地址来访问 mac 即可将其唤醒。好在我还有个 Homelab 安装了 Debian，专门用于内部网络的跳板。可以参考[如何配置一台新的翻墙服务器](https://blog.d0zingcat.dev/p/how-to-setup-a-new-vpn/) 中配置 bbr 的部分，那边一起打开了系统的网络流量转发能力，这样那台机器就可以作为子网的一个跳板机了，只要在启动 tailscale 的时候使用命令 `sudo tailscale up --advertise-routes=192.168.2.0/24` 即可广播 192.168.2.0/24 的访问都通过这台机器做转发。然后去到 tailscale [Admin Console](https://login.tailscale.com/admin/machines) 点击三个点-Edit route settings 打开 Subnet routes 即可使其它他节点启用这个路由规则。而在需要访问此子网段的机器上需要手动执行一次 `sudo tailscale up --accept-routes` 以注册同意使用子网段的路由规则。
 
-有些人也会选择直接在路由器上面装上 wireguard/tailscale 实现对内网的访问，但网络问题太过复杂，且排查起来非常麻烦，因此我的考虑是在路由器（OpenWRT）上尽量少引入变量（尤其是会全局改变一些配置的），以实现最大的稳定性。
+> 有些人也会选择直接在路由器上面装上 wireguard/tailscale 实现对内网的访问，但网络问题太过复杂，且排查起来非常麻烦，因此我的考虑是在路由器（OpenWRT）上尽量少引入变量（尤其是会全局改变一些配置的），以实现最大的稳定性。
+
+2023-05-14更新：在实际使用的时候我发现即便有 UPNP，但当局域网内存在两个装了 tailscale 的设备之后就会存在两个同样的端口 41641，当暴露在公网上之后因为冲突就会有一个端口为 41642（典型的碰撞），暂时观察无法确定这种是否也能够实现半程的直连，所以为了减少变量我还是选择给路由器（openWRT）安装上了 tailscale，教程如：[Tailscale](https://openwrt.org/docs/guide-user/services/vpn/tailscale/start)
+
+![](upnp.png)
 
 ![](lan.png)
 
@@ -197,7 +201,7 @@ Report:
 
 换言之，这样我就可以在公司电脑上通过 192.168.2.111（假设是家中 mac 设备的ip地址）访问了。
 
-另外也推荐打开 Tailscale 的 MagicDNS 和 Nameserver 并启用 Overwrite local DNS，前者用于通过机器名称解析出内网 IP，后者用于强制 DNS 走公用可靠的服务，这样可以有效避免一些非验证 DNS 的错误记录导致的奇奇怪怪的网络问题。
+另外也推荐打开 Tailscale 的 MagicDNS 和 Nameserver 并启用 Overwrite local DNS，前者用于通过机器名称解析出内网 IP，后者用于强制 DNS Upstream 走公用可靠的服务，这样可以有效避免一些非验证 DNS 的错误记录导致的奇奇怪怪的网络问题，但代价就是本地一些解析可能会失效（例如 路由器的一些 *.lan 域名）。
 
 ![](dns.png)
 

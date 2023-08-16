@@ -6,7 +6,7 @@ description:
 license: 
 hidden: false
 comments: true
-categories: ['Journal']
+categories: ['Tutorial']
 tags: ['workflow', 'productivity']
 draft: true
 ---

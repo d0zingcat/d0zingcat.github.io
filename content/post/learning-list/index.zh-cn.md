@@ -38,7 +38,7 @@ draft: false
 	  - `-d` for dir exists 
 	  - `-z`for zero string  
 	  - `-n` for non-zero string
-- =~ for regex match = for string equal to != for string not equal to
+- `=~` for regex match `=` for string equal to `!=` for string not equal to
 - `(xx yy)` for bash array
 	- `${name[index]}` to get item
 	- starts from 0 and `*` for all the items

@@ -191,8 +191,6 @@ Report:
 
 > 有些人也会选择直接在路由器上面装上 wireguard/tailscale 实现对内网的访问，但网络问题太过复杂，且排查起来非常麻烦，因此我的考虑是在路由器（OpenWRT）上尽量少引入变量（尤其是会全局改变一些配置的），以实现最大的稳定性。
 
-2023-05-14更新：在实际使用的时候我发现即便有 UPNP，但当局域网内存在两个装了 tailscale 的设备之后就会存在两个同样的端口 41641，当暴露在公网上之后因为冲突就会有一个端口为 41642（典型的碰撞），暂时观察无法确定这种是否也能够实现半程的直连，所以为了减少变量我还是选择给路由器（openWRT）安装上了 tailscale，教程如：[Tailscale](https://openwrt.org/docs/guide-user/services/vpn/tailscale/start)
-
 ![](upnp.png)
 
 ![](lan.png)
@@ -204,6 +202,13 @@ Report:
 另外也推荐打开 Tailscale 的 MagicDNS 和 Nameserver 并启用 Overwrite local DNS，前者用于通过机器名称解析出内网 IP，后者用于强制 DNS Upstream 走公用可靠的服务，这样可以有效避免一些非验证 DNS 的错误记录导致的奇奇怪怪的网络问题，但代价就是本地一些解析可能会失效（例如 路由器的一些 *.lan 域名）。
 
 ![](dns.png)
+
+**2023-05-14**
+在实际使用的时候我发现即便有 UPNP，但当局域网内存在两个装了 tailscale 的设备之后就会存在两个同样的端口 41641，当暴露在公网上之后因为冲突就会有一个端口为 41642（典型的碰撞），暂时观察无法确定这种是否也能够实现半程的直连，所以为了减少变量我还是选择给路由器（openWRT）安装上了 tailscale，教程如：[Tailscale](https://openwrt.org/docs/guide-user/services/vpn/tailscale/start)，可以留意到在这个教程中创建了 tailscale 这个空间，和 lan 做转发的时候配置了防火墙策略，做了 masquerade（其实就是 SNAT 成 tailscale 的接口 IP，也就是 100.64.xxx.xxx），换言之，外部流量从 WAN 到 LAN 的时候会被自动转换 SNAT。
+
+**2023-08-29**
+之前我使用的时候并没有发现可能存在的一个问题是我的主路由上安装了 openclash 作为全家的翻墙透明代理，这个 app 控制了一些网络行为，可能存在一些 iptables 的规则做了一些 SNAT 的操作，理论上来讲通过之前的配置访问局域网的时候 Source IP 应该是 100.64.xxx.xxx 可能局域网内有些服务会校验从而丢弃这个流量。但由于最近调整了家庭的网络拓扑，现在使用了 PVE 中虚拟机跑 openwrt，里面安装 shellclash 作为旁路由（主路由中配置 DHCP options）来实现的代理，无法复现之前的场景，因此此处也不再多进行深究。而这次调整之后可以发现公司电脑无法通过 tailscale 的内网地址连接家中的 macbook，所以需要自己在主路由上进行 SNAT 规则的配置。按照下面图片进行配置在 `/etc/config/firewall` 中即可，dest_ip 改成实际自己的 lan 网段，snat_ip 使用局域网的网关地址即可，这样就可以实现从公司电脑通过 tailscale 访问家中的 macbook 了。
+![Alt text](<snat_op.png>)
 
 # 参考
 

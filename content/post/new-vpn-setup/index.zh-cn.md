@@ -39,27 +39,48 @@ draft: false
         - `net.ipv4.ip_forward = 1`
         - `net.ipv6.conf.all.forwarding = 1`
     - `sysctl -p` 生效
-- 配置gost
-    - `wget https://github.com/go-gost/gost/releases/download/v3.0.0-rc7/gost_3.0.0-rc7_linux_amd64.tar.gz`
-        - `tar zxvf xxx && mv gost /usr/local/bin`
-    - wiki [`https://gost.run/tutorials/protocols/ss/`](https://gost.run/tutorials/protocols/ss/)
-    - github `https://github.com/go-gost/gost`
-- 配置pm2
-    - `mkdir pm2 && cd pm2 && pm2 init`
-    - 贴入关键配置 `gost -L ss+ssu://chacha20-ietf-poly1305:{password}@:8338`
-    - `pm2 start`
-    - `pm2 startup`
-    - `pm2 save`
-    - 配置log rotate
-        
-        ```bash
-        pm2 install pm2-logrotate
-        pm2 set pm2-logrotate:max_size 50M
-        pm2 set pm2-logrotate:retain 10
-        pm2 set pm2-logrotate:compress true
-        ```
-        
-    - shortcuts `pm2 ls / pm2 log/ pm2 monit`
+- 这两步不一定必须，现在我更喜欢用 docker 来管理我所有的服务
+    - 配置gost
+        - `wget https://github.com/go-gost/gost/releases/download/v3.0.0-rc7/gost_3.0.0-rc7_linux_amd64.tar.gz`
+            - `tar zxvf xxx && mv gost /usr/local/bin`
+        - wiki [`https://gost.run/tutorials/protocols/ss/`](https://gost.run/tutorials/protocols/ss/)
+        - github `https://github.com/go-gost/gost`
+    - 配置pm2
+        - `mkdir pm2 && cd pm2 && pm2 init`
+        - 贴入关键配置 `gost -L ss+ssu://chacha20-ietf-poly1305:{password}@:8338`
+        - `pm2 start`
+        - `pm2 startup`
+        - `pm2 save`
+        - 配置log rotate
+            
+            ```bash
+            pm2 install pm2-logrotate
+            pm2 set pm2-logrotate:max_size 50M
+            pm2 set pm2-logrotate:retain 10
+            pm2 set pm2-logrotate:compress true
+            ```
+        - shortcuts `pm2 ls / pm2 log/ pm2 monit`
+- 安装 docker 
+  - `curl -fsSL https://get.docker.com | bash`
+  - `systemctl start docker && systemctl enable docker && usermod -aG docker $USER && exit`
+- docker 中启动 gost
+  ```
+  ---
+  version: "3.8"
+  services:
+    gost:
+        container_name: gost
+        image: gogost/gost
+        networks:
+        - my_network
+        command:
+        - -L
+        - ss+ssu://chacha20-ietf-poly1305:xxx@:8338
+        ports:
+        - 3388:8338/tcp
+        - 3388:8338/udp
+        restart: unless-stopped
+  ```
 - 安装tailscale
     - `curl -fsSL https://tailscale.com/install.sh | sh`
 - 更新openclash

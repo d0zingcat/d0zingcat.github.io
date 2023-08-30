@@ -36,8 +36,8 @@ draft: false
     - `vim /etc/sysctl.conf`
         - 添加 `net.core.default_qdisc=fq`
         - `net.ipv4.tcp_congestion_control=bbr`
-        - `net.ipv4.ip_forward = 1`
-        - `net.ipv6.conf.all.forwarding = 1`
+        - `net.ipv4.ip_forward=1`
+        - `net.ipv6.conf.all.forwarding=1`
     - `sysctl -p` 生效
 - 这两步不一定必须，现在我更喜欢用 docker 来管理我所有的服务
     - 配置gost

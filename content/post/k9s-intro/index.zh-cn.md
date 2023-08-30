@@ -9,7 +9,7 @@ tags: ['k9s', 'k8s']
 license: 
 hidden: false
 comments: true
-draft: true
+draft: false
 ---
 # K9S 快速上手指南
 

@@ -9,7 +9,7 @@ hidden: false
 comments: true
 categories: ['Tutorial']
 tags: ['devops', 'terrafom', 'ansible', 'cloud-init']
-draft: true
+draft: false
 ---
 
 > 之前[^1]有介绍过我一般会在一台新的代理服务器上做的一般性的操作，这边对该文做了一定的拓展和补充。

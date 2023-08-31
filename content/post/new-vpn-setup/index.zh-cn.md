@@ -75,10 +75,10 @@ draft: false
         - my_network
         command:
         - -L
-        - ss+ssu://chacha20-ietf-poly1305:xxx@:8338
+        - ss+ssu://chacha20-ietf-poly1305:xxx@:3388
         ports:
-        - 3388:8338/tcp
-        - 3388:8338/udp
+        - 3388:3388/tcp
+        - 3388:3388/udp
         restart: unless-stopped
   ```
 - 安装tailscale

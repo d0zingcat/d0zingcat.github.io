@@ -9,7 +9,7 @@ license:
 hidden: false
 comments: true
 categories: ['Journal']
-tags: ['vpn','ss']
+tags: ['vpn','shadowsocks']
 draft: false
 --- 
 

@@ -1,5 +1,5 @@
 ---
-title: "Devops Intro"
+title: "Ops Automation Intro"
 description: 
 date: 2023-08-30T22:51:41+08:00
 image: 
@@ -8,7 +8,7 @@ license:
 hidden: false
 comments: true
 categories: ['Tutorial']
-tags: ['devops', 'terrafom', 'ansible', 'cloud-init']
+tags: ['automation', 'ops', 'terrafom', 'ansible', 'cloud-init']
 draft: false
 ---
 
@@ -153,7 +153,7 @@ virtualmachines:
         msg: "{{ result.stdout }}"
 ```
 简单解释一下👆的配置的作用：
-- 安装依赖们，并升级当前所有的软件包，`become: true` 意味着提权到 sudo（inventory 中配置的账户应该具备 sudo 免密的权限）
+- 安装依赖，并升级当前所有的软件包，`become: true` 意味着提权到 sudo（inventory 中配置的账户应该具备 sudo 免密的权限）
 - 添加一个用户，用户名在 `vars` 中定义了，替换语法即 "{{ user }}"
 - 对用户添加 authorized_keys 用于 ssh 免密登陆，`"{{ lookup('onepassword', 'Personal', field='public key') }}"` 用于查询 `1Password` 中的 Personal 项目，字段是 `public key`
   - 如果是本地文件的话可以换成：`"{{ lookup('file', 'files/'+ 'xxx' + '.key.pub') }}"`

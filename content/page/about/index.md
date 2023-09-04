@@ -15,4 +15,4 @@ menu:
             icon: user
 ---
 
-It is such a pleasure to have friends coming from afar!
+Hi, I am nobody.

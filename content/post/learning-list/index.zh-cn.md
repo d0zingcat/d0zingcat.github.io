@@ -59,3 +59,26 @@ draft: false
 	- `u` for user, `g` for group, `a` for everyone and `o` for everyone else
 	- ops: `+` `-` `=`
 
+以及下面的书单是 GPT 告诉我的：
+
+1.《计算机程序的构造和解释》(SICP) - 由Harold Abelson、Gerald Jay Sussman和Julie Sussman合著的经典教材，深入浅出地讲解了计算机程序设计的基本原理，是一本极具启发性的书籍。
+
+2.《算法导论》(Introduction to Algorithms) - 由Thomas H. Cormen、Charles E. Leiserson、Ronald L. Rivest和Clifford Stein合著，是一本全面介绍算法设计和分析的权威性教材，广泛被计算机科学的学生和专业人士所采用。
+
+3.《深入理解计算机系统》(Computer Systems: A Programmer's Perspective) - 由Randal E. Bryant和David R. O'Hallaron合著，帮助读者理解计算机底层系统的工作原理和编程技巧。
+
+4.《编程珠玑》(The Pragmatic Programmer) - 由Andrew Hunt和David Thomas合著，涵盖了实用的编程技巧、设计原则和项目管理建议，是一本广受欢迎的实用型计算机书籍。
+
+5.《人工智能：一种现代方法》(Artificial Intelligence: A Modern Approach) - 由Stuart Russell和Peter Norvig合著，是一本广泛引用的人工智能教科书，全面涵盖了AI的各个方面。
+
+6.《计算机网络：自顶向下方法》(Computer Networking: A Top-Down Approach) - 由James F. Kurose和Keith W. Ross合著，以自顶向下的方式解释计算机网络的概念和协议。
+
+7.《Clean Code: A Handbook of Agile Software Craftsmanship》 - 由Robert C. Martin撰写，强调编写清晰、可维护和高质量代码的重要性，是一本在软件开发社区广受推崇的书籍。
+
+8.《代码大全》(Code Complete) - 由Steve McConnell撰写，是一本涵盖软件构建过程中最佳实践的经典著作。
+
+9.《设计模式：可复用面向对象软件的基础》(Design Patterns: Elements of Reusable Object-Oriented Software) - 四位作者Erich Gamma、Richard Helm、Ralph Johnson和John Vlissides一同创作的书籍，介绍了常见的软件设计模式。
+
+10.《黑
+
+客与画家》(Hackers & Painters) - 由Paul Graham撰写，该书探讨了编程、创新和技术的关系，对程序员和创业者都有很大启发。

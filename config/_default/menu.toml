@@ -1,0 +1,45 @@
+# Configure main menu and social menu
+#[[main]]
+#identifier = "home"
+#name = "Home"
+#url = "/"
+#[main.params]
+#icon = "home"
+#newtab = true
+
+[[social]]
+identifier = "github"
+name = "GitHub"
+url = "https://d0zingcat.dev"
+weight = 1
+
+[social.params]
+icon = "brand-github"
+
+[[social]]
+identifier = "twitter"
+name = "Twitter"
+url = "https://twitter.com/d0zingcat"
+weight = 2
+
+[social.params]
+icon = "brand-twitter"
+
+[[social]]
+identifier = "home"
+name = "Home"
+url = "https://home.d0zingcat.dev"
+weight = 4
+
+[social.params]
+icon = "brand-notion"
+
+[[social]]
+identifier = "rss"
+name = "RSS"
+url = "https://blog.d0zingcat.dev/index.xml"
+weight = 6
+
+[social.params]
+icon = "rss"
+

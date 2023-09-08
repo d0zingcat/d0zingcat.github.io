@@ -2,12 +2,12 @@
 title: "About"
 date: 2022-08-21T08:40:10+08:00
 draft: false
+slug: "about"
 aliases:
   - about-us
-  - about-hugo
   - contact
 license: CC BY-NC-ND
-lastmod: '2022-08-21'
+lastmod: '2023-09-08'
 menu:
     main: 
         weight: -90

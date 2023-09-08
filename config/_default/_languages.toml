@@ -1,0 +1,13 @@
+# language
+[en]
+languageName = "English"
+languagedirection = "ltr"
+title = "For(;;)"
+weight = 1
+
+[zh-cn]
+languageName = "中文"
+languagedirection = "ltr"
+title = "无尽循环"
+weight = 2
+

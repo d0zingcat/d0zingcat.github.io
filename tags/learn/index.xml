@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>learn on For(;;)</title><link>https://blog.d0zingcat.dev/tags/learn/</link><description>Recent content in learn on For(;;)</description><generator>Hugo -- gohugo.io</generator><language>zh-cn</language><lastBuildDate>Thu, 17 Aug 2023 00:19:27 +0800</lastBuildDate><atom:link href="https://blog.d0zingcat.dev/tags/learn/index.xml" rel="self" type="application/rss+xml"/><item><title>学习清单[持续更新]</title><link>https://blog.d0zingcat.dev/p/%E5%AD%A6%E4%B9%A0%E6%B8%85%E5%8D%95%E6%8C%81%E7%BB%AD%E6%9B%B4%E6%96%B0/</link><pubDate>Thu, 17 Aug 2023 00:19:27 +0800</pubDate><guid>https://blog.d0zingcat.dev/p/%E5%AD%A6%E4%B9%A0%E6%B8%85%E5%8D%95%E6%8C%81%E7%BB%AD%E6%9B%B4%E6%96%B0/</guid><description>&lt;blockquote>
+&lt;p>通过这篇文章我会持续更新一些我种草的或者已经买了的书籍，以及一些我想学习的东西。我会同步更新一些我学习过程中的笔记，但需要说明的是笔记是每个人知识结构化的中间过程，是每个人查漏补缺的工具，所以我认为笔记并不具备通用性，根据每个人自己先验知识的不同笔记可能会天差地远，因此每个人应该通过自己的学习来总结得到自己的笔记。&lt;/p>
+&lt;/blockquote>
+&lt;h3 id="the-unix-workbenchhttpsseankrosscomthe-unix-workbenchworking-with-unixhtml">&lt;a class="link" href="https://seankross.com/the-unix-workbench/working-with-unix.html" target="_blank" rel="noopener"
+>The Unix Workbench&lt;/a>&lt;/h3>
+&lt;p>&lt;em>学习 Unix-like System 和 Shell Scripting 最好的入门读物，非常基础但非常实用，适合初学者。也可以配套 coursera 的教程一起食用：&lt;a class="link" href="https://www.coursera.org/learn/unix/home/week/1" target="_blank" rel="noopener"
+>The Unix Workbench&lt;/a>&lt;/em>&lt;/p>
+&lt;ul>
+&lt;li>&lt;code>ls -l&lt;/code> means &amp;ldquo;long format&amp;rdquo;&lt;/li>
+&lt;li>&lt;code>apropos editor&lt;/code> to find related tools&lt;/li>
+&lt;li>grep defaults to regex expression
+&lt;ul>
+&lt;li>&lt;code>(xxx)*&lt;/code> means a group&lt;/li>
+&lt;li>&lt;code>{2,3}&lt;/code> both sides are closed&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>&lt;code>mv ~/.Trash&lt;/code> on mac and &lt;code>mv ~/.local/share/Trash&lt;/code> on Ubuntu to delete file/directory&lt;/li>
+&lt;li>&lt;code>cat&lt;/code> means &amp;ldquo;concatenate&amp;rdquo; file, but we use it to print file contents&lt;/li>
+&lt;li>&lt;code>sdiff&lt;/code> to compare side by side&lt;/li>
+&lt;li>&lt;code>makefile&lt;/code> command should be indented with &lt;code>TAB&lt;/code>&lt;/li>
+&lt;li>&lt;code>bc&lt;/code> for Bash benchmark&lt;/li>
+&lt;li>&lt;code>$()&lt;/code> is command substitution ,&lt;code>$()&lt;/code>&lt;/li>
+&lt;li>&lt;code>$@&lt;/code> array of all arguments, &lt;code>$#&lt;/code> number of arguments, &lt;code>$?&lt;/code> for last exit status&lt;/li>
+&lt;li>You can combine AND and OR operators in commands, which are evaluated from left to right, no priority should be concerned, e.g. &lt;code>echo Athos || echo Porthos &amp;amp;&amp;amp; echo Aramis&lt;/code>&lt;/li>
+&lt;li>&lt;code>[[]]&lt;/code> for bool ops
+&lt;ul>
+&lt;li>&lt;code>-eq&lt;/code>&lt;/li>
+&lt;li>&lt;code>-ne&lt;/code>
+&lt;ul>
+&lt;li>&lt;code>-e&lt;/code> for file exists&lt;/li>
+&lt;li>&lt;code>-d&lt;/code> for dir exists&lt;/li>
+&lt;li>&lt;code>-z&lt;/code>for zero string&lt;/li>
+&lt;li>&lt;code>-n&lt;/code> for non-zero string&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>&lt;code>=~&lt;/code> for regex match &lt;code>=&lt;/code> for string equal to &lt;code>!=&lt;/code> for string not equal to&lt;/li>
+&lt;li>&lt;code>(xx yy)&lt;/code> for bash array
+&lt;ul>
+&lt;li>&lt;code>${name[index]}&lt;/code> to get item&lt;/li>
+&lt;li>starts from 0 and &lt;code>*&lt;/code> for all the items&lt;/li>
+&lt;li>&lt;code>name[index]=xxx&lt;/code> to set value&lt;/li>
+&lt;li>&lt;code>${plagues[*]:5:3} &lt;/code> to get by range(start:count)&lt;/li>
+&lt;li>&lt;code>${#plagues[*]}&lt;/code> to get length&lt;/li>
+&lt;li>&lt;code>dwarfs+=(bashful dopey happy)&lt;/code> to append to list&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>&lt;code>echo a{0..4}&lt;/code> -&amp;gt; &lt;code>a0 a1 a2 a3 a4&lt;/code>
+&lt;ul>
+&lt;li>&lt;code>echo {1..3}{A..C}&lt;/code> -&amp;gt; &lt;code>1A 1B 1C 2A 2B 2C 3A 3B 3C&lt;/code>&lt;/li>
+&lt;li>&lt;code>eval echo {$start..$end}&lt;/code> -&amp;gt; &lt;code>4 5 6 7 8 9&lt;/code>&lt;/li>
+&lt;li>&lt;code>echo {{1..3},{a..c}}&lt;/code> -&amp;gt; &lt;code>1 2 3 a b c&lt;/code>&lt;/li>
+&lt;li>&lt;code>echo {Who,What,Why,When,How}?&lt;/code> -&amp;gt; &lt;code>Who? What? Why? When? How?&lt;/code>&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>&lt;code>let&lt;/code> to declare/redeclare a variable
+&lt;ul>
+&lt;li>&lt;code>let sum=sum+$element&lt;/code> it does not need a a&lt;code>$&lt;/code> to refer to the param itself&lt;/li>
+&lt;li>&lt;code>let&lt;/code> clause is alike &lt;code>sum=$((sum + element))&lt;/code>&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>use &lt;code>local&lt;/code> to prevent parameter overwriting&lt;/li>
+&lt;li>chmod
+&lt;ul>
+&lt;li>&lt;code>u&lt;/code> for user, &lt;code>g&lt;/code> for group, &lt;code>a&lt;/code> for everyone and &lt;code>o&lt;/code> for everyone else&lt;/li>
+&lt;li>ops: &lt;code>+&lt;/code> &lt;code>-&lt;/code> &lt;code>=&lt;/code>&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ul>
+&lt;p>以及下面的书单是 GPT 告诉我的：&lt;/p>
+&lt;p>1.《计算机程序的构造和解释》(SICP) - 由Harold Abelson、Gerald Jay Sussman和Julie Sussman合著的经典教材，深入浅出地讲解了计算机程序设计的基本原理，是一本极具启发性的书籍。&lt;/p>
+&lt;p>2.《算法导论》(Introduction to Algorithms) - 由Thomas H. Cormen、Charles E. Leiserson、Ronald L. Rivest和Clifford Stein合著，是一本全面介绍算法设计和分析的权威性教材，广泛被计算机科学的学生和专业人士所采用。&lt;/p>
+&lt;p>3.《深入理解计算机系统》(Computer Systems: A Programmer&amp;rsquo;s Perspective) - 由Randal E. Bryant和David R. O&amp;rsquo;Hallaron合著，帮助读者理解计算机底层系统的工作原理和编程技巧。&lt;/p>
+&lt;p>4.《编程珠玑》(The Pragmatic Programmer) - 由Andrew Hunt和David Thomas合著，涵盖了实用的编程技巧、设计原则和项目管理建议，是一本广受欢迎的实用型计算机书籍。&lt;/p>
+&lt;p>5.《人工智能：一种现代方法》(Artificial Intelligence: A Modern Approach) - 由Stuart Russell和Peter Norvig合著，是一本广泛引用的人工智能教科书，全面涵盖了AI的各个方面。&lt;/p>
+&lt;p>6.《计算机网络：自顶向下方法》(Computer Networking: A Top-Down Approach) - 由James F. Kurose和Keith W. Ross合著，以自顶向下的方式解释计算机网络的概念和协议。&lt;/p>
+&lt;p>7.《Clean Code: A Handbook of Agile Software Craftsmanship》 - 由Robert C. Martin撰写，强调编写清晰、可维护和高质量代码的重要性，是一本在软件开发社区广受推崇的书籍。&lt;/p>
+&lt;p>8.《代码大全》(Code Complete) - 由Steve McConnell撰写，是一本涵盖软件构建过程中最佳实践的经典著作。&lt;/p>
+&lt;p>9.《设计模式：可复用面向对象软件的基础》(Design Patterns: Elements of Reusable Object-Oriented Software) - 四位作者Erich Gamma、Richard Helm、Ralph Johnson和John Vlissides一同创作的书籍，介绍了常见的软件设计模式。&lt;/p>
+&lt;p>10.《黑&lt;/p>
+&lt;p>客与画家》(Hackers &amp;amp; Painters) - 由Paul Graham撰写，该书探讨了编程、创新和技术的关系，对程序员和创业者都有很大启发。&lt;/p></description></item></channel></rss>

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>misc on For(;;)</title><link>https://blog.d0zingcat.dev/tags/misc/</link><description>Recent content in misc on For(;;)</description><generator>Hugo -- gohugo.io</generator><language>zh-cn</language><lastBuildDate>Tue, 22 Mar 2022 07:58:57 +0800</lastBuildDate><atom:link href="https://blog.d0zingcat.dev/tags/misc/index.xml" rel="self" type="application/rss+xml"/><item><title>新的博客</title><link>https://blog.d0zingcat.dev/p/new-blog-new-start/</link><pubDate>Tue, 22 Mar 2022 07:58:57 +0800</pubDate><guid>https://blog.d0zingcat.dev/p/new-blog-new-start/</guid><description>&lt;blockquote>
+&lt;p>好久没有写博客了，可能是懒惰也可能是生疏导致的，但是客观地来讲并不是一个很好的现象，因为知识是网状的需要总结需要成体系的。当然也不是所有的内容都适合被结构化，也有一些其他的有意思的但是值得被记录下来的东西。&lt;/p>
+&lt;/blockquote>
+&lt;p>我的个人博客从最早到现在也算是有很长的历史了。
+部署方式从最早的 空间 到 独立主机 到 SAE 到 云 到 Github Pages 到 Netlify 到 最后又回到了Github Pages（其中有很多的原因，但是这篇文章不会进一步说明）；
+博客系统从 Wordpress 到 Ghost 到 Echo 到 Hexo 到 Hugo 到 Hexo 然后目前又回到了 Hugo；
+域名从 &lt;code>www.d0zingcat.xyz&lt;/code> 到 &lt;code>blog.d0zingcat.xyz&lt;/code> 到 &lt;code>infloop.life&lt;/code> 到 &lt;code>blog.d0zingcat.xyz&lt;/code> 到 &lt;code>blog.d0zingcat.dev&lt;/code>。之所以最后选择用dev的域名原因有那么几个：&lt;/p>
+&lt;ol>
+&lt;li>dev是Google Domains买的，一年12刀很便宜，谷歌爸爸赛高。&lt;/li>
+&lt;li>可以自动签https证书，且可以无限添加跳转规则（对比之下Cloudflare有点过于小气了），跳转带子路径，比如 &lt;code>https://d0zingcat.dev/&lt;/code> 会自动跳转到 &lt;code>https://github.com/d0zingcat/&lt;/code> ，所以要访问我的个人项目比如dotfiles只需要访问 &lt;code>https://d0zingcat.dev/dotfiles&lt;/code> 就会自动跳转了。&lt;/li>
+&lt;li>.dev 更复合我开发的身份。&lt;/li>
+&lt;li>域名包括博客和内容，每次我重新调整的时候基本是一个全新的开始，是一个美好的祈愿，也是对自己的一种鼓励和鞭策。&lt;/li>
+&lt;/ol>
+&lt;p>如果关注想知道我怎么部署的，不如参考我的仓库&lt;sup id="fnref:1">&lt;a href="#fn:1" class="footnote-ref" role="doc-noteref">1&lt;/a>&lt;/sup> 。这个仓库实现了自动打包发布到 Github Pages 和 Fleek 上&lt;sup id="fnref:2">&lt;a href="#fn:2" class="footnote-ref" role="doc-noteref">2&lt;/a>&lt;/sup>，主要还是根据官方的一些教程进行操作的，不是很难，如果没有特别的需要不会展开写怎么设置这些。另外，如果你很感兴趣的话，可以访问我部署在 IPFS 上的博客，和这个博客是镜像&lt;sup id="fnref:3">&lt;a href="#fn:3" class="footnote-ref" role="doc-noteref">3&lt;/a>&lt;/sup> 。部署在Fleek上有两个注意点： &lt;code>Settings-Build Settings&lt;/code> 中设置&lt;code>Build Command&lt;/code> 为 &lt;code>git submodule update --recursive &amp;amp;&amp;amp; hugo&lt;/code>，而 &lt;code>Advanced Build Settings-Specify Docker Image&lt;/code> 则使用 &lt;code>shawnoster/hugo-extended-for-fleek:99.0&lt;/code> 这个镜像，因为我的主题用了&lt;code>Sass/SCSS&lt;/code> 需要&lt;code>hugo-extended&lt;/code> 才能支持生成。&lt;/p>
+&lt;p>值得一提的是，部署在 fleek 上配置好对应的 ENS 域名之后，会同时获得三个域名： &lt;code>xxx.on.fleek.co&lt;/code>, &lt;code>xxx.eth.link&lt;/code>, &lt;code>xxx.eth.limo&lt;/code>。例如V神的博客地址就是托管在这上面的&lt;sup id="fnref:4">&lt;a href="#fn:4" class="footnote-ref" role="doc-noteref">4&lt;/a>&lt;/sup>。&lt;/p>
+&lt;p>希望这是一个新的开始，New Blog, New Start.&lt;/p>
+&lt;h1 id="参考">参考&lt;/h1>
+&lt;p>&lt;a class="link" href="https://printempw.github.io/use-github-actions-to-deploy-hexo-blog/" target="_blank" rel="noopener"
+>使用 GitHub Actions 自动部署 Hexo 博客&lt;/a>&lt;/p>
+&lt;p>&lt;a class="link" href="https://gohugobrasil.netlify.app/themes/customizing/" target="_blank" rel="noopener"
+>Override Archetypes&lt;/a>&lt;/p>
+&lt;div class="footnotes" role="doc-endnotes">
+&lt;hr>
+&lt;ol>
+&lt;li id="fn:1">
+&lt;p>&lt;a class="link" href="https://d0zingcat.dev/d0zingcat.github.io" target="_blank" rel="noopener"
+>d0zingcat.github.io&lt;/a>&amp;#160;&lt;a href="#fnref:1" class="footnote-backref" role="doc-backlink">&amp;#x21a9;&amp;#xfe0e;&lt;/a>&lt;/p>
+&lt;/li>
+&lt;li id="fn:2">
+&lt;p>&lt;a class="link" href="https://fleek.co/" target="_blank" rel="noopener"
+>Fleek&lt;/a>&amp;#160;&lt;a href="#fnref:2" class="footnote-backref" role="doc-backlink">&amp;#x21a9;&amp;#xfe0e;&lt;/a>&lt;/p>
+&lt;/li>
+&lt;li id="fn:3">
+&lt;p>&lt;a class="link" href="https://d0zingcat.eth.limo" target="_blank" rel="noopener"
+>d0zingcat.eth.limo&lt;/a>&amp;#160;&lt;a href="#fnref:3" class="footnote-backref" role="doc-backlink">&amp;#x21a9;&amp;#xfe0e;&lt;/a>&lt;/p>
+&lt;/li>
+&lt;li id="fn:4">
+&lt;p>&lt;a class="link" href="https://vitalik.eth.limo" target="_blank" rel="noopener"
+>vitalik.eth.limo&lt;/a>&amp;#160;&lt;a href="#fnref:4" class="footnote-backref" role="doc-backlink">&amp;#x21a9;&amp;#xfe0e;&lt;/a>&lt;/p>
+&lt;/li>
+&lt;/ol>
+&lt;/div></description></item></channel></rss>

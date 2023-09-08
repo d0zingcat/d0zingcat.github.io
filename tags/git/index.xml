@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>git on For(;;)</title><link>https://blog.d0zingcat.dev/tags/git/</link><description>Recent content in git on For(;;)</description><generator>Hugo -- gohugo.io</generator><language>zh-cn</language><lastBuildDate>Sat, 15 Oct 2022 14:12:20 +0800</lastBuildDate><atom:link href="https://blog.d0zingcat.dev/tags/git/index.xml" rel="self" type="application/rss+xml"/><item><title>1password SSH Key 管理实践</title><link>https://blog.d0zingcat.dev/p/1password-ssh-key-in-practice/</link><pubDate>Sat, 15 Oct 2022 14:12:20 +0800</pubDate><guid>https://blog.d0zingcat.dev/p/1password-ssh-key-in-practice/</guid><description>&lt;h1 id="起因">起因&lt;/h1>
+&lt;p>在上一篇文章&lt;sup id="fnref:1">&lt;a href="#fn:1" class="footnote-ref" role="doc-noteref">1&lt;/a>&lt;/sup>中有介绍过关于使用1Password做Github的commit Sign，当具体尝试之后我发现这种做法比 GPG 简单太多，而且很好管理，GPG单独维护一套很难做脚本的自动化，如果真的换机了之后应该还是需要重新找资料重新配置一遍，而且备份和还原方案也比较复杂，并不是我理想中的无痛的迁移方案，因此如果是需要做Github的commit 签名还是推荐这种方式，具体的方法可以参考我在上篇文章中推荐的资料。&lt;/p>
+&lt;h1 id="步骤">步骤&lt;/h1>
+&lt;p>我能想到的仅有的两个缺点一个是需要配置SSH的IdentityAgent, 而这个地址其实可以通过软连接的方式直接引用到&lt;code>~/.1password/agent.sock&lt;/code>（这可以通过迁移的脚本来自动处理），以及（目前我掌握的信息来看）并没有一个方案可以在ssh config中指定连接时要使用的1Password中具体的某个SSH Key，因此还是在实际连接中程序会自动尝试所有存储在1Password中的key （虽然一般key的数量不会很多而且处理起来也很快，但总归是很不好的实现）。虽然可以通过下载Public Key到本地在ssh config中指定&lt;code>IdentitiesOnly&lt;/code> &lt;sup id="fnref:2">&lt;a href="#fn:2" class="footnote-ref" role="doc-noteref">2&lt;/a>&lt;/sup>和&lt;code>IdentityFile&lt;/code>来控制，但并不是所有的程序都支持（例如我工作中依赖的Datagrip就不支持）&lt;sup id="fnref:3">&lt;a href="#fn:3" class="footnote-ref" role="doc-noteref">3&lt;/a>&lt;/sup>。&lt;/p>
+&lt;p>根据1Password官方的教程&lt;sup id="fnref:4">&lt;a href="#fn:4" class="footnote-ref" role="doc-noteref">4&lt;/a>&lt;/sup>可以把大部分的配置都完成，本文不会在具体介绍。这个模块下的所有的文章都值得读，但重点可以关注&lt;code>Get Started&lt;/code>, &lt;code>Manage SSH Keys&lt;/code>, &lt;code>SSH agent&lt;/code>三个部分。另外官方也有写博客&lt;sup id="fnref:5">&lt;a href="#fn:5" class="footnote-ref" role="doc-noteref">5&lt;/a>&lt;/sup>来的介绍这个功能，以及社区中别人的写的教程也很值得读&lt;sup id="fnref:6">&lt;a href="#fn:6" class="footnote-ref" role="doc-noteref">6&lt;/a>&lt;/sup>。&lt;/p>
+&lt;h1 id="排错">排错&lt;/h1>
+&lt;p>需要提示的是当我尝试替换掉我所有的SSH Key成1Password中配置的Key时，我才发现原先我并没有成功配置。
+有两个关键点，一个是&lt;code>~/.ssh&lt;/code>中还是存在&lt;code>id_rsa&lt;/code>和&lt;code>id_rsa.pub&lt;/code>两个文件，因此大部分server的访问还是通过&lt;code>.ssh&lt;/code>目录下的密钥文件来访问的，换言之压根没有读取到1Password中的key；一个是我设置ssh-agent时是通过软链的方式连接到了&lt;code>~/.1password&lt;/code>中，但是我并没有使用全路径创建的软连接(命令是&lt;code>mkdir -p ~/.1password &amp;amp;&amp;amp; ln -s ~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock ~/.1password/agent.sock&lt;/code>)，所以看起来软连接是失效的。但实际上做Git Commit签名的时候还是正常的，这个问题我暂时没有明白。但通过shell查询这个目录下时，可以发现软链接是红色也就是失效的。于是通过命令&lt;code>mkdir -p ~/.1password &amp;amp;&amp;amp; ln -sf /Users/{username}/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock /Users/{username}/.1password/agent.sock&lt;/code>重新创建软链接之后即可发现软链接已经正常了。然后把&lt;code>~/.ssh&lt;/code>中key都删除之后重新连接server即可发现能够正常触发1Password的验证了。&lt;/p>
+&lt;p>另外，在实际操作的过程中有发现Datagrip&lt;sup id="fnref:7">&lt;a href="#fn:7" class="footnote-ref" role="doc-noteref">7&lt;/a>&lt;/sup>会无法正常使用SSH Tunnel来查询SQL。之前可以是直接读取的&lt;code>~/.ssh/id_rsa&lt;/code>作为私钥来认证，而这次我把本地的私钥和公钥都删除了，因此原先的SSH tunnel配置就失效了（&lt;code>Tools-SSH Configurations&lt;/code>中的Authentication type 从Key pair，也就是本地文件方式改成OpenSSH config and authentication agent）。但并没有生效，而&lt;code>~/.ssh/config&lt;/code> 中也配置了下面的配置，理论上可以控制所有的SSH 连接。&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-fallback" data-lang="fallback">&lt;span class="line">&lt;span class="cl">Host *
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> IdentityAgent &amp;#34;~/.1password/agent.sock&amp;#34;
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>具体到报错提示：&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-fallback" data-lang="fallback">&lt;span class="line">&lt;span class="cl">Authentication using ssh-agent
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">Unable to connect to ssh-agent: &amp;#34;~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock&amp;#34; path to socket is incorrect.
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">Using ssh-agent during SSH key-based authentication is disabled.
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>1Password中的Team member给了解决方案&lt;sup id="fnref:8">&lt;a href="#fn:8" class="footnote-ref" role="doc-noteref">8&lt;/a>&lt;/sup>，也很简单，在&lt;code>Settings-Advanced Settings-SSH-Configuration files parser&lt;/code>从默认的Legacy改成OpenSSH 即可。&lt;/p>
+&lt;h1 id="更进一步-20230128">更进一步 2023.01.28&lt;/h1>
+&lt;p>最近拿到了新电脑，一台公司用（且称呼为air），一台私人用（且称呼为pro）。但比较特殊的是公司要求使用公司邮箱注册Github账号，那么密钥的管理上面就会存在一些差异，因为&lt;strong>Github不允许在两个账号下添加同一个公钥&lt;/strong>。不过有意思的是Github允许同一个公钥同时添加到&lt;code>Authentication Keys&lt;/code> 和 &lt;code>Signing keys&lt;/code>，那么做法就比较清晰了：&lt;/p>
+&lt;ol>
+&lt;li>废弃我之前的密钥对，新生成两对密钥（密钥类型使用更加先进的ed25519），分别称呼为&lt;code>Personal_cipher&lt;/code>和&lt;code>Work_cipher&lt;/code>，存储在1Password中并下载公钥存储到本地&lt;code>~/.ssh/&lt;/code>中，分别命名为&lt;code>personal_git.pub&lt;/code>和&lt;code>work_git.pub&lt;/code>&lt;/li>
+&lt;li>准备好两个Github账号，分别称呼为 &lt;code>Personal_github&lt;/code>和&lt;code>Work_github&lt;/code>&lt;/li>
+&lt;li>把&lt;code>Work_cipher&lt;/code>的公钥添加到&lt;code>Work_github&lt;/code> &lt;code>Settings-SSH and GPG keys&lt;/code>中，同时添加为&lt;code>Authentication Keys&lt;/code> 和 &lt;code>Signing keys&lt;/code>&lt;/li>
+&lt;li>把&lt;code>Personal_cipher&lt;/code>的公钥添加到&lt;code>Personal_github&lt;/code> &lt;code>Settings-SSH and GPG keys&lt;/code>中，同时添加为&lt;code>Authentication Keys&lt;/code> 和 &lt;code>Signing keys&lt;/code>&lt;/li>
+&lt;li>如下配置&lt;code>~/.ssh/config&lt;/code>&lt;/li>
+&lt;li>对个人/公司仓库，配置不同的remote地址&lt;sup id="fnref:9">&lt;a href="#fn:9" class="footnote-ref" role="doc-noteref">9&lt;/a>&lt;/sup>，以及配置对应的用户名/邮箱。&lt;/li>
+&lt;/ol>
+&lt;p>&lt;em>ssh config&lt;/em>&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;span class="lnt">15
+&lt;/span>&lt;span class="lnt">16
+&lt;/span>&lt;span class="lnt">17
+&lt;/span>&lt;span class="lnt">18
+&lt;/span>&lt;span class="lnt">19
+&lt;/span>&lt;span class="lnt">20
+&lt;/span>&lt;span class="lnt">21
+&lt;/span>&lt;span class="lnt">22
+&lt;/span>&lt;span class="lnt">23
+&lt;/span>&lt;span class="lnt">24
+&lt;/span>&lt;span class="lnt">25
+&lt;/span>&lt;span class="lnt">26
+&lt;/span>&lt;span class="lnt">27
+&lt;/span>&lt;span class="lnt">28
+&lt;/span>&lt;span class="lnt">29
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-ini" data-lang="ini">&lt;span class="line">&lt;span class="cl">&lt;span class="na">Host *&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="na">IdentityAgent &amp;#34;~/.1password/agent.sock&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="na">ServerAliveInterval 60&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="na">TCPKeepAlive yes&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># 可不配置，但建议配置，好处是可以在大陆使用时更加省心&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># 例如当VPN供应商为了解决爆破滥用的问题，在防火墙策略上禁用了22出口，&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># 那么在使用VPN的时候原先直接使用ssh的22端口进行代码的拉取推送等操作&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># 会被拦截，提示密钥交换失败连接中断等奇奇怪怪的问题&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="na">Host github.com&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="na">Hostname ssh.github.com&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="na">Port 443&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="na">User git&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># Personal GitHub&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="na">Host personalgit&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="na">Hostname ssh.github.com&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="na">Port 443&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="na">User git&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="na">IdentityFile ~/.ssh/personal_git.pub&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="na">IdentitiesOnly yes&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># Work GitHub&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="na">Host workgit&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="na">Hostname ssh.github.com&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="na">Port 443&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="na">User git&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="na">IdentityFile ~/.ssh/work_git.pub&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="na">IdentitiesOnly yes&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>当然，全局也可以根据不同的电脑配置不同的默认账户/签名的公钥，对于原先没有更改过remote的仓库就还是可以按照默认的名称、签名密钥去流转，这个可以参考具体git的命令或是写好的gitconfig文件&lt;sup id="fnref:10">&lt;a href="#fn:10" class="footnote-ref" role="doc-noteref">10&lt;/a>&lt;/sup>。&lt;/p>
+&lt;p>下面是一个简单的shell函数，可以酌情添加在&lt;code>~/.zshrc&lt;/code>中进行使用&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;span class="lnt">15
+&lt;/span>&lt;span class="lnt">16
+&lt;/span>&lt;span class="lnt">17
+&lt;/span>&lt;span class="lnt">18
+&lt;/span>&lt;span class="lnt">19
+&lt;/span>&lt;span class="lnt">20
+&lt;/span>&lt;span class="lnt">21
+&lt;/span>&lt;span class="lnt">22
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">&lt;span class="line">&lt;span class="cl">&lt;span class="k">function&lt;/span> replace_remote&lt;span class="o">()&lt;/span> &lt;span class="o">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">if&lt;/span> &lt;span class="o">((&lt;/span> &lt;span class="nv">$#&lt;/span> !&lt;span class="o">=&lt;/span> &lt;span class="m">1&lt;/span> &lt;span class="o">))&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">then&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nb">echo&lt;/span> &lt;span class="s1">&amp;#39;Invalid parameter!&amp;#39;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">else&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nv">url&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="k">$(&lt;/span>git remote -v &lt;span class="p">|&lt;/span> head -n &lt;span class="m">1&lt;/span> &lt;span class="p">|&lt;/span> cut -d &lt;span class="s1">$&amp;#39;\t&amp;#39;&lt;/span> -f &lt;span class="m">2&lt;/span> &lt;span class="p">|&lt;/span> cut -d &lt;span class="s1">&amp;#39; &amp;#39;&lt;/span> -f 1&lt;span class="k">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nv">suffix&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="k">$(&lt;/span>&lt;span class="nb">echo&lt;/span> &lt;span class="nv">$url&lt;/span> &lt;span class="p">|&lt;/span> cut -d &lt;span class="s1">&amp;#39;:&amp;#39;&lt;/span> -f 2&lt;span class="k">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">case&lt;/span> &lt;span class="nv">$1&lt;/span> in
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> work&lt;span class="o">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nv">new_url&lt;/span>&lt;span class="o">=&lt;/span>workgit:&lt;span class="nv">$suffix&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> git remote set-url origin &lt;span class="nv">$new_url&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">;;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> personal&lt;span class="o">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nv">new_url&lt;/span>&lt;span class="o">=&lt;/span>personalgit:&lt;span class="nv">$suffix&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> git remote set-url origin &lt;span class="nv">$new_url&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">;;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> *&lt;span class="o">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nb">echo&lt;/span> &lt;span class="s1">&amp;#39;Invalid parameter&amp;#39;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">;;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">esac&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">fi&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="o">}&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>使用方法则是&lt;code>replace_remote work|personal&lt;/code>，而更改git用户名和邮箱则可以通过&lt;code>git config user.name &amp;quot;billgates&amp;quot; &amp;amp;&amp;amp; git config user.email &amp;quot;jeff@google.com&amp;quot;&lt;/code>来实现，如果要设置全局的&lt;code>config&lt;/code>后面跟&lt;code>--global&lt;/code>即可&lt;sup id="fnref:11">&lt;a href="#fn:11" class="footnote-ref" role="doc-noteref">11&lt;/a>&lt;/sup>。&lt;/p>
+&lt;div class="footnotes" role="doc-endnotes">
+&lt;hr>
+&lt;ol>
+&lt;li id="fn:1">
+&lt;p>&lt;a class="link" href="https://blog.d0zingcat.dev/p/how-to-enbale-gpg-sign-for-github/#%E8%A1%A5%E5%85%85" target="_blank" rel="noopener"
+>如何给Github commit启用GPG Sign签名&lt;/a>&amp;#160;&lt;a href="#fnref:1" class="footnote-backref" role="doc-backlink">&amp;#x21a9;&amp;#xfe0e;&lt;/a>&lt;/p>
+&lt;/li>
+&lt;li id="fn:2">
+&lt;p>&lt;a class="link" href="https://www.georglutz.de/blog/2014/03/30/identitiesonly-in-ssh_config/" target="_blank" rel="noopener"
+>IdentitiesOnly in ssh_config&lt;/a>&amp;#160;&lt;a href="#fnref:2" class="footnote-backref" role="doc-backlink">&amp;#x21a9;&amp;#xfe0e;&lt;/a>&lt;/p>
+&lt;/li>
+&lt;li id="fn:3">
+&lt;p>&lt;a class="link" href="https://developer.1password.com/docs/ssh/agent/compatibility/" target="_blank" rel="noopener"
+>SSH client compatibility&lt;/a>&amp;#160;&lt;a href="#fnref:3" class="footnote-backref" role="doc-backlink">&amp;#x21a9;&amp;#xfe0e;&lt;/a>&lt;/p>
+&lt;/li>
+&lt;li id="fn:4">
+&lt;p>&lt;a class="link" href="https://developer.1password.com/docs/ssh" target="_blank" rel="noopener"
+>1Password for SSH &amp;amp; Git&lt;/a>&amp;#160;&lt;a href="#fnref:4" class="footnote-backref" role="doc-backlink">&amp;#x21a9;&amp;#xfe0e;&lt;/a>&lt;/p>
+&lt;/li>
+&lt;li id="fn:5">
+&lt;p>&lt;a class="link" href="https://blog.1password.com/1password-ssh-agent/" target="_blank" rel="noopener"
+>SSH and Git, meet 1Password 🥰&lt;/a>&amp;#160;&lt;a href="#fnref:5" class="footnote-backref" role="doc-backlink">&amp;#x21a9;&amp;#xfe0e;&lt;/a>&lt;/p>
+&lt;/li>
+&lt;li id="fn:6">
+&lt;p>&lt;a class="link" href="https://tinkerwell.app/blog/how-to-set-up-the-1password-ssh-agent-for-secure-ssh-connections" target="_blank" rel="noopener"
+>How to set up the 1Password SSH agent for secure SSH connections&lt;/a> | &lt;a class="link" href="https://crossedwires.substack.com/p/1password-ssh-terminal-bliss" target="_blank" rel="noopener"
+>1Password + SSH = Terminal Bliss&lt;/a> | &lt;a class="link" href="https://qiita.com/ohakutsu/items/083dcd86d4a0b887461d" target="_blank" rel="noopener"
+>1Password for SSHを試してみる&lt;/a> | &lt;a class="link" href="https://dev.classmethod.jp/articles/1password-git-ssh/" target="_blank" rel="noopener"
+>Github等で利用するSSH keyの作成及び管理を1Passwordで行う&lt;/a>&amp;#160;&lt;a href="#fnref:6" class="footnote-backref" role="doc-backlink">&amp;#x21a9;&amp;#xfe0e;&lt;/a>&lt;/p>
+&lt;/li>
+&lt;li id="fn:7">
+&lt;p>&lt;a class="link" href="https://www.jetbrains.com/help/datagrip/settings-tools-ssh-configurations.html" target="_blank" rel="noopener"
+>SSH Configurations&lt;/a>&amp;#160;&lt;a href="#fnref:7" class="footnote-backref" role="doc-backlink">&amp;#x21a9;&amp;#xfe0e;&lt;/a>&lt;/p>
+&lt;/li>
+&lt;li id="fn:8">
+&lt;p>&lt;a class="link" href="https://1password.community/discussion/127788/request-identity-agent-compatibility-with-data-grip" target="_blank" rel="noopener"
+>Request: identity agent compatibility with data grip&lt;/a>&amp;#160;&lt;a href="#fnref:8" class="footnote-backref" role="doc-backlink">&amp;#x21a9;&amp;#xfe0e;&lt;/a>&lt;/p>
+&lt;/li>
+&lt;li id="fn:9">
+&lt;p>&lt;a class="link" href="https://developer.1password.com/docs/ssh/agent/advanced/#use-multiple-github-accounts" target="_blank" rel="noopener"
+>Use multiple GitHub accounts&lt;/a>&amp;#160;&lt;a href="#fnref:9" class="footnote-backref" role="doc-backlink">&amp;#x21a9;&amp;#xfe0e;&lt;/a>&lt;/p>
+&lt;/li>
+&lt;li id="fn:10">
+&lt;p>&lt;a class="link" href="https://github.com/d0zingcat/dotfiles/blob/main/git/config" target="_blank" rel="noopener"
+>~/.gitconfig&lt;/a>&amp;#160;&lt;a href="#fnref:10" class="footnote-backref" role="doc-backlink">&amp;#x21a9;&amp;#xfe0e;&lt;/a>&lt;/p>
+&lt;/li>
+&lt;li id="fn:11">
+&lt;p>&lt;a class="link" href="https://www.git-tower.com/learn/git/faq/change-author-name-email" target="_blank" rel="noopener"
+>How can I change the author name / email of a commit?&lt;/a>&amp;#160;&lt;a href="#fnref:11" class="footnote-backref" role="doc-backlink">&amp;#x21a9;&amp;#xfe0e;&lt;/a>&lt;/p>
+&lt;/li>
+&lt;/ol>
+&lt;/div></description></item></channel></rss>

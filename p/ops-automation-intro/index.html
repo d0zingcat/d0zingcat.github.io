@@ -1,0 +1,248 @@
+<!doctype html><html lang=zh-cn dir=ltr><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=description content="之前1有介绍过我一般会在一台新的代理服务器上做的一般性的操作，这边对该文做了一定的拓展和补充。
+事实上，如果我们存在多台服务器的时候，一台一台配置必然会耗费大量的精力，也非常容易出现配置不一致的问题，最后往往会引发一些不必要的麻烦，一般问题查到最后总是一个非常低级的错误。那么有没有办法避免这样的问题呢？答案自然是有的，那就是自动化。
+考虑到自动化我一般可能会选择以 Terraform 为代表的云服务管理工具，如果是普通的大众的云服务器，基本上都提供了 API（以及 terraform 的 provider）。但自己折腾的过程中往往还有这两种情况：
+奇奇怪怪的小服务器厂商，人家根本没有对应的 terraform 支持 独立主机（可能是 baremetal，也可能是自己局域网里面的主机，一般我会选择使用 Proxmox VE 来管理，但也可能是别种虚拟软件） 因此，在这个层面上来讲，terraform 并不是万能的。我开始思考有没有别的同类型的工具，通过简单的调研发现还有两种：Cloud-init 和 Ansible。
+前者我在使用 PVE 的时候就已经发现了，但 PVE 原生对其支持很有限（只能用来配置 network相关），并没有很大灵活性；而我是后续在使用 Digital Ocean 或是 Vultr 这类云厂商的时候发现创建主机可以指定一个 user-data ，按照 cloud-init 的语法编写对应的配置就可以非常简单和高效地完成初始化。
+后者我在很早的时候就便听说了，且现在的公司使用的是 Hetzner Bare Metal 主机运维就是通过这个工具来完成来的，这次我选择使用这个工具来完成我 AWS Lightsail 和 Oracle Cloud 上各一台小主机的自动化运维。事实上，这次我本想要通过 cloud-init + terraform 的方式来运维，主要考虑到我的其他云设施是通过 terraform 来管理的（例如 Cloudflare 的域名），而 clout-init 在其他云厂商被支持的比较好，也是一个通用且强大的解决方案，一定程度上是“一剑破万法的”，但实际调研的过程中发现 cloud-init 没有基础设施的支持（例如一个局域网的 HTTP 服务用于提供 metadata 的下载）的话要使用本地的配置文件这件事情就非常复杂，而 terraform 的话因为已经是开好的两个 VPS 而无法直接定义成对应的资源（也更别提自动化的配置了），也无法和 cloud-init 结合起来用。上述只是我在查阅资料过程中得到的浅薄的结论，如有错误，恳请指正。"><title>Ops Automation Intro</title><link rel=canonical href=https://blog.d0zingcat.dev/p/ops-automation-intro/><link rel=stylesheet href=/scss/style.min.abbd69b2908fdfcd5179898beaafd374514a86538d81639ddd2c58c06ae54e40.css><meta property="og:title" content="Ops Automation Intro"><meta property="og:description" content="之前1有介绍过我一般会在一台新的代理服务器上做的一般性的操作，这边对该文做了一定的拓展和补充。
+事实上，如果我们存在多台服务器的时候，一台一台配置必然会耗费大量的精力，也非常容易出现配置不一致的问题，最后往往会引发一些不必要的麻烦，一般问题查到最后总是一个非常低级的错误。那么有没有办法避免这样的问题呢？答案自然是有的，那就是自动化。
+考虑到自动化我一般可能会选择以 Terraform 为代表的云服务管理工具，如果是普通的大众的云服务器，基本上都提供了 API（以及 terraform 的 provider）。但自己折腾的过程中往往还有这两种情况：
+奇奇怪怪的小服务器厂商，人家根本没有对应的 terraform 支持 独立主机（可能是 baremetal，也可能是自己局域网里面的主机，一般我会选择使用 Proxmox VE 来管理，但也可能是别种虚拟软件） 因此，在这个层面上来讲，terraform 并不是万能的。我开始思考有没有别的同类型的工具，通过简单的调研发现还有两种：Cloud-init 和 Ansible。
+前者我在使用 PVE 的时候就已经发现了，但 PVE 原生对其支持很有限（只能用来配置 network相关），并没有很大灵活性；而我是后续在使用 Digital Ocean 或是 Vultr 这类云厂商的时候发现创建主机可以指定一个 user-data ，按照 cloud-init 的语法编写对应的配置就可以非常简单和高效地完成初始化。
+后者我在很早的时候就便听说了，且现在的公司使用的是 Hetzner Bare Metal 主机运维就是通过这个工具来完成来的，这次我选择使用这个工具来完成我 AWS Lightsail 和 Oracle Cloud 上各一台小主机的自动化运维。事实上，这次我本想要通过 cloud-init + terraform 的方式来运维，主要考虑到我的其他云设施是通过 terraform 来管理的（例如 Cloudflare 的域名），而 clout-init 在其他云厂商被支持的比较好，也是一个通用且强大的解决方案，一定程度上是“一剑破万法的”，但实际调研的过程中发现 cloud-init 没有基础设施的支持（例如一个局域网的 HTTP 服务用于提供 metadata 的下载）的话要使用本地的配置文件这件事情就非常复杂，而 terraform 的话因为已经是开好的两个 VPS 而无法直接定义成对应的资源（也更别提自动化的配置了），也无法和 cloud-init 结合起来用。上述只是我在查阅资料过程中得到的浅薄的结论，如有错误，恳请指正。"><meta property="og:url" content="https://blog.d0zingcat.dev/p/ops-automation-intro/"><meta property="og:site_name" content="For(;;)"><meta property="og:type" content="article"><meta property="article:section" content="Post"><meta property="article:tag" content="automation"><meta property="article:tag" content="ops"><meta property="article:tag" content="terrafom"><meta property="article:tag" content="ansible"><meta property="article:tag" content="cloud-init"><meta property="article:published_time" content="2023-08-30T22:51:41+08:00"><meta property="article:modified_time" content="2023-08-30T22:51:41+08:00"><meta name=twitter:title content="Ops Automation Intro"><meta name=twitter:description content="之前1有介绍过我一般会在一台新的代理服务器上做的一般性的操作，这边对该文做了一定的拓展和补充。
+事实上，如果我们存在多台服务器的时候，一台一台配置必然会耗费大量的精力，也非常容易出现配置不一致的问题，最后往往会引发一些不必要的麻烦，一般问题查到最后总是一个非常低级的错误。那么有没有办法避免这样的问题呢？答案自然是有的，那就是自动化。
+考虑到自动化我一般可能会选择以 Terraform 为代表的云服务管理工具，如果是普通的大众的云服务器，基本上都提供了 API（以及 terraform 的 provider）。但自己折腾的过程中往往还有这两种情况：
+奇奇怪怪的小服务器厂商，人家根本没有对应的 terraform 支持 独立主机（可能是 baremetal，也可能是自己局域网里面的主机，一般我会选择使用 Proxmox VE 来管理，但也可能是别种虚拟软件） 因此，在这个层面上来讲，terraform 并不是万能的。我开始思考有没有别的同类型的工具，通过简单的调研发现还有两种：Cloud-init 和 Ansible。
+前者我在使用 PVE 的时候就已经发现了，但 PVE 原生对其支持很有限（只能用来配置 network相关），并没有很大灵活性；而我是后续在使用 Digital Ocean 或是 Vultr 这类云厂商的时候发现创建主机可以指定一个 user-data ，按照 cloud-init 的语法编写对应的配置就可以非常简单和高效地完成初始化。
+后者我在很早的时候就便听说了，且现在的公司使用的是 Hetzner Bare Metal 主机运维就是通过这个工具来完成来的，这次我选择使用这个工具来完成我 AWS Lightsail 和 Oracle Cloud 上各一台小主机的自动化运维。事实上，这次我本想要通过 cloud-init + terraform 的方式来运维，主要考虑到我的其他云设施是通过 terraform 来管理的（例如 Cloudflare 的域名），而 clout-init 在其他云厂商被支持的比较好，也是一个通用且强大的解决方案，一定程度上是“一剑破万法的”，但实际调研的过程中发现 cloud-init 没有基础设施的支持（例如一个局域网的 HTTP 服务用于提供 metadata 的下载）的话要使用本地的配置文件这件事情就非常复杂，而 terraform 的话因为已经是开好的两个 VPS 而无法直接定义成对应的资源（也更别提自动化的配置了），也无法和 cloud-init 结合起来用。上述只是我在查阅资料过程中得到的浅薄的结论，如有错误，恳请指正。"><link rel="shortcut icon" href=/favicon.png><script async src="https://www.googletagmanager.com/gtag/js?id=G-61ZBR1WNR6"></script>
+<script>var doNotTrack=!1;if(!doNotTrack){window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-61ZBR1WNR6",{anonymize_ip:!1})}</script></head><body class=article-page><script>(function(){const e="StackColorScheme";localStorage.getItem(e)||localStorage.setItem(e,"auto")})()</script><script>(function(){const t="StackColorScheme",e=localStorage.getItem(t),n=window.matchMedia("(prefers-color-scheme: dark)").matches===!0;e=="dark"||e==="auto"&&n?document.documentElement.dataset.scheme="dark":document.documentElement.dataset.scheme="light"})()</script><div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky"><button class="hamburger hamburger--spin" type=button id=toggle-menu aria-label=切换菜单>
+<span class=hamburger-box><span class=hamburger-inner></span></span></button><header><figure class=site-avatar><a href=/><img src=/img/avatar_huc4c8a6b4e8ce74f5db07d6f756cf296a_291465_300x0_resize_box_3.png width=300 height=300 class=site-logo loading=lazy alt=Avatar></a>
+<span class=emoji>🍥</span></figure><div class=site-meta><h1 class=site-name><a href=/>For(;;)</a></h1><h2 class=site-description>Carpe Diem.</h2></div></header><ol class=social-menu><li><a href=https://d0zingcat.dev target=_blank title=GitHub rel=me><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6.0 00-1.3-3.2 4.2 4.2.0 00-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3.0 00-6.2.0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2.0 00-.1 3.2A4.6 4.6.0 004 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/></svg></a></li><li><a href=https://twitter.com/d0zingcat target=_blank title=Twitter rel=me><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-twitter" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M22 4.01c-1 .49-1.98.689-3 .99-1.121-1.265-2.783-1.335-4.38-.737S11.977 6.323 12 8v1c-3.245.083-6.135-1.395-8-4 0 0-4.182 7.433 4 11-1.872 1.247-3.739 2.088-6 2 3.308 1.803 6.913 2.423 10.034 1.517 3.58-1.04 6.522-3.723 7.651-7.742a13.84 13.84.0 00.497-3.753C20.18 7.773 21.692 5.25 22 4.009z"/></svg></a></li><li><a href=https://home.d0zingcat.dev target=_blank title=Home rel=me><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-notion" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M7 7h3l6 6"/><path d="M8 7v10"/><path d="M7 17h2"/><path d="M15 7h2"/><path d="M16 7v10h-1l-7-7"/></svg></a></li><li><a href=https://blog.d0zingcat.dev/index.xml target=_blank title=RSS rel=me><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-rss" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="5" cy="19" r="1"/><path d="M4 4a16 16 0 0116 16"/><path d="M4 11a9 9 0 019 9"/></svg></a></li></ol><ol class=menu id=main-menu><li><a href=/><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><polyline points="5 12 3 12 12 3 21 12 19 12"/><path d="M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/><path d="M9 21v-6a2 2 0 012-2h2a2 2 0 012 2v6"/></svg><span>主页</span></a></li><li><a href=/about/><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="7" r="4"/><path d="M6 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/></svg><span>关于</span></a></li><li><a href=/archives/><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><rect x="3" y="4" width="18" height="4" rx="2"/><path d="M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8"/><line x1="10" y1="12" x2="14" y2="12"/></svg><span>归档</span></a></li><li><a href=/search/><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="10" cy="10" r="7"/><line x1="21" y1="21" x2="15" y2="15"/></svg><span>搜索</span></a></li><li><a href=/links/><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><path d="M10 14a3.5 3.5.0 005 0l4-4a3.5 3.5.0 00-5-5l-.5.5"/><path d="M14 10a3.5 3.5.0 00-5 0l-4 4a3.5 3.5.0 005 5l.5-.5"/></svg><span>链接</span></a></li><div class=menu-bottom-section><li id=dark-mode-toggle><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="8" cy="12" r="2"/><rect x="2" y="6" width="20" height="12" rx="6"/></svg><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="16" cy="12" r="2"/><rect x="2" y="6" width="20" height="12" rx="6"/></svg><span>暗色模式</span></li></div></ol></aside><main class="main full-width"><article class=main-article><header class=article-header><div class=article-details><header class=article-category><a href=/categories/tutorial/>Tutorial</a></header><div class=article-title-wrapper><h2 class=article-title><a href=/p/ops-automation-intro/>Ops Automation Intro</a></h2></div><footer class=article-time><div><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><path d="M11.795 21H5a2 2 0 01-2-2V7a2 2 0 012-2h12a2 2 0 012 2v4"/><circle cx="18" cy="18" r="4"/><path d="M15 3v4"/><path d="M7 3v4"/><path d="M3 11h16"/><path d="M18 16.496V18l1 1"/></svg><time class=article-time--published>Aug 30, 2023</time></div><div><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg><time class=article-time--reading>阅读时长: 3 分钟</time></div></footer></div></header><section class=article-content><blockquote><p>之前<sup id=fnref:1><a href=#fn:1 class=footnote-ref role=doc-noteref>1</a></sup>有介绍过我一般会在一台新的代理服务器上做的一般性的操作，这边对该文做了一定的拓展和补充。</p></blockquote><p>事实上，如果我们存在多台服务器的时候，一台一台配置必然会耗费大量的精力，也非常容易出现配置不一致的问题，最后往往会引发一些不必要的麻烦，一般问题查到最后总是一个非常低级的错误。那么有没有办法避免这样的问题呢？答案自然是有的，那就是自动化。</p><p>考虑到自动化我一般可能会选择以 Terraform 为代表的云服务管理工具，如果是普通的大众的云服务器，基本上都提供了 API（以及 terraform 的 provider）。但自己折腾的过程中往往还有这两种情况：</p><ol><li>奇奇怪怪的小服务器厂商，人家根本没有对应的 terraform 支持</li><li>独立主机（可能是 baremetal，也可能是自己局域网里面的主机，一般我会选择使用 Proxmox VE 来管理，但也可能是别种虚拟软件）</li></ol><p>因此，在这个层面上来讲，terraform 并不是万能的。我开始思考有没有别的同类型的工具，通过简单的调研发现还有两种：Cloud-init 和 Ansible。</p><p>前者我在使用 PVE 的时候就已经发现了，但 PVE 原生对其支持很有限（只能用来配置 network相关），并没有很大灵活性；而我是后续在使用 Digital Ocean 或是 Vultr 这类云厂商的时候发现创建主机可以指定一个 user-data ，按照 cloud-init 的语法编写对应的配置就可以非常简单和高效地完成初始化。</p><p>后者我在很早的时候就便听说了，且现在的公司使用的是 Hetzner Bare Metal 主机运维就是通过这个工具来完成来的，这次我选择使用这个工具来完成我 AWS Lightsail 和 Oracle Cloud 上各一台小主机的自动化运维。事实上，这次我本想要通过 cloud-init + terraform 的方式来运维，主要考虑到我的其他云设施是通过 terraform 来管理的（例如 Cloudflare 的域名），而 clout-init 在其他云厂商被支持的比较好，也是一个通用且强大的解决方案，一定程度上是“一剑破万法的”，但实际调研的过程中发现 cloud-init 没有基础设施的支持（例如一个局域网的 HTTP 服务用于提供 metadata 的下载）的话要使用本地的配置文件这件事情就非常复杂，而 terraform 的话因为已经是开好的两个 VPS 而无法直接定义成对应的资源（也更别提自动化的配置了），也无法和 cloud-init 结合起来用。上述只是我在查阅资料过程中得到的浅薄的结论，如有错误，恳请指正。</p><p>回到 ansible 本身，首先是安装，mac 用户直接 brew。
+然后建立一个 ansible 的目录，结构如下：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-fallback data-lang=fallback><span class=line><span class=cl>➔ tree
+</span></span><span class=line><span class=cl>.
+</span></span><span class=line><span class=cl>├── docker-compose.yml
+</span></span><span class=line><span class=cl>├── inventory.yaml
+</span></span><span class=line><span class=cl>└── playbook.yaml
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>1 directory, 3 files
+</span></span></code></pre></td></tr></table></div></div><p><code>docker-compose.yml</code> 使用 docker 启动一个 gost 的 instance 用于翻墙，内容如下：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-yaml data-lang=yaml><span class=line><span class=cl><span class=nn>---</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>version</span><span class=p>:</span><span class=w> </span><span class=s2>&#34;3.8&#34;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>services</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>gost</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>container_name</span><span class=p>:</span><span class=w> </span><span class=l>gost</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>image</span><span class=p>:</span><span class=w> </span><span class=l>gogost/gost</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>networks</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span>- <span class=l>my_network</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>command</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span>- -<span class=l>L</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span>- <span class=l>ss+ssu://chacha20-ietf-poly1305:{password}@:3388</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>ports</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span>- <span class=m>3388</span><span class=p>:</span><span class=m>3388</span><span class=l>/tcp</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span>- <span class=m>3388</span><span class=p>:</span><span class=m>3388</span><span class=l>/udp</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>restart</span><span class=p>:</span><span class=w> </span><span class=l>unless-stopped</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>networks</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>my_network</span><span class=p>:</span><span class=w>
+</span></span></span></code></pre></td></tr></table></div></div><p><code>inventory.yaml</code> 中定义了我要运维的两台主机：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-yaml data-lang=yaml><span class=line><span class=cl><span class=nt>virtualmachines</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>vars</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>ssh_port</span><span class=p>:</span><span class=w> </span><span class=m>1984</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>hosts</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>oracle_sanjose</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>ansible_host</span><span class=p>:</span><span class=w> </span>{<span class=l>hosta_ip}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>ansible_user</span><span class=p>:</span><span class=w> </span><span class=l>ubuntu</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>aws_tokyo</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>ansible_host</span><span class=p>:</span><span class=w> </span>{<span class=l>hostb_ip}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>ansible_user</span><span class=p>:</span><span class=w> </span><span class=l>admin</span><span class=w>
+</span></span></span></code></pre></td></tr></table></div></div><p><code>playbook.yaml</code> 中定义了具体的操作：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span><span class=lnt>39
+</span><span class=lnt>40
+</span><span class=lnt>41
+</span><span class=lnt>42
+</span><span class=lnt>43
+</span><span class=lnt>44
+</span><span class=lnt>45
+</span><span class=lnt>46
+</span><span class=lnt>47
+</span><span class=lnt>48
+</span><span class=lnt>49
+</span><span class=lnt>50
+</span><span class=lnt>51
+</span><span class=lnt>52
+</span><span class=lnt>53
+</span><span class=lnt>54
+</span><span class=lnt>55
+</span><span class=lnt>56
+</span><span class=lnt>57
+</span><span class=lnt>58
+</span><span class=lnt>59
+</span><span class=lnt>60
+</span><span class=lnt>61
+</span><span class=lnt>62
+</span><span class=lnt>63
+</span><span class=lnt>64
+</span><span class=lnt>65
+</span><span class=lnt>66
+</span><span class=lnt>67
+</span><span class=lnt>68
+</span><span class=lnt>69
+</span><span class=lnt>70
+</span><span class=lnt>71
+</span><span class=lnt>72
+</span><span class=lnt>73
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-yaml data-lang=yaml><span class=line><span class=cl><span class=nn>---</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span>- <span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>Init</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>hosts</span><span class=p>:</span><span class=w> </span><span class=l>virtualmachines</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>vars</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>user</span><span class=p>:</span><span class=w> </span><span class=l>d0zingcat</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>tasks</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>Install deps</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>become</span><span class=p>:</span><span class=w> </span><span class=kc>true</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>apt</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nt>name</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>          </span>- <span class=l>htop</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>          </span>- <span class=l>acl</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>          </span>- <span class=l>nload</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>          </span>- <span class=l>tree</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>          </span>- <span class=l>vim</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>          </span>- <span class=l>iptables</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>          </span>- <span class=l>iptables-persistent</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nt>state</span><span class=p>:</span><span class=w> </span><span class=l>latest</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>Upgrade</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>become</span><span class=p>:</span><span class=w> </span><span class=kc>true</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>apt</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nt>upgrade</span><span class=p>:</span><span class=w> </span><span class=l>dist</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>Add User {{ user }}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>become</span><span class=p>:</span><span class=w> </span><span class=kc>true</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>user</span><span class=p>:</span><span class=w> 
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=s2>&#34;{{ user }}&#34;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nt>shell</span><span class=p>:</span><span class=w> </span><span class=l>/bin/bash</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nt>generate_ssh_key</span><span class=p>:</span><span class=w> </span><span class=kc>yes</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nt>groups</span><span class=p>:</span><span class=w> </span><span class=s2>&#34;{{ user }},sudo&#34;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=s2>&#34;Add authorized keys&#34;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>become</span><span class=p>:</span><span class=w> </span><span class=kc>true</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>authorized_key</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nt>user</span><span class=p>:</span><span class=w> </span><span class=s2>&#34;{{ user }}&#34;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nt>key</span><span class=p>:</span><span class=w> </span><span class=s2>&#34;{{ lookup(&#39;onepassword&#39;, &#39;Personal&#39;, field=&#39;public key&#39;) }}&#34;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>Exec sh script on Remote Node</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>become</span><span class=p>:</span><span class=w> </span><span class=kc>true</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>shell</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nt>cmd</span><span class=p>:</span><span class=w> </span><span class=p>|</span><span class=sd>
+</span></span></span><span class=line><span class=cl><span class=sd>          iptables -F
+</span></span></span><span class=line><span class=cl><span class=sd>          iptables -X
+</span></span></span><span class=line><span class=cl><span class=sd>          iptables -P INPUT ACCEPT
+</span></span></span><span class=line><span class=cl><span class=sd>          iptables -P FORWARD ACCEPT
+</span></span></span><span class=line><span class=cl><span class=sd>          iptables -P OUTPUT ACCEPT
+</span></span></span><span class=line><span class=cl><span class=sd>          netfilter-persistent save
+</span></span></span><span class=line><span class=cl><span class=sd>          cat &lt;&lt;EOF | tee /etc/sysctl.d/common.conf
+</span></span></span><span class=line><span class=cl><span class=sd>          net.core.default_qdisc=fq
+</span></span></span><span class=line><span class=cl><span class=sd>          net.ipv4.tcp_congestion_control=bbr
+</span></span></span><span class=line><span class=cl><span class=sd>          net.ipv4.ip_forward=1
+</span></span></span><span class=line><span class=cl><span class=sd>          net.ipv6.conf.all.forwarding=1
+</span></span></span><span class=line><span class=cl><span class=sd>          EOF
+</span></span></span><span class=line><span class=cl><span class=sd>          sysctl -p
+</span></span></span><span class=line><span class=cl><span class=sd>          cat &lt;&lt;EOF | tee /etc/sudoers.d/100-ansible-user
+</span></span></span><span class=line><span class=cl><span class=sd>          &#34;{{ user }}&#34; ALL=(ALL) NOPASSWD:ALL
+</span></span></span><span class=line><span class=cl><span class=sd>          EOF
+</span></span></span><span class=line><span class=cl><span class=sd>          sed -i &#39;/#Port /s_^#Port 22_Port 1984_&#39; /etc/ssh/sshd_config
+</span></span></span><span class=line><span class=cl><span class=sd>          sed -i &#39;/^#PermitRootLogin prohibit-password/s_#__&#39; /etc/ssh/sshd_config
+</span></span></span><span class=line><span class=cl><span class=sd>          hostnamectl set-hostname myworker
+</span></span></span><span class=line><span class=cl><span class=sd>          # systemctl restart sshd
+</span></span></span><span class=line><span class=cl><span class=sd>          curl -fsSL https://tailscale.com/install.sh | bash
+</span></span></span><span class=line><span class=cl><span class=sd>          curl -fsSL https://get.docker.com | bash
+</span></span></span><span class=line><span class=cl><span class=sd>          systemctl enable docker
+</span></span></span><span class=line><span class=cl><span class=sd>          usermod -aG docker {{ user }}</span><span class=w>          
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>register</span><span class=p>:</span><span class=w> </span><span class=l>result</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>Copy docker compose</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>become</span><span class=p>:</span><span class=w> </span><span class=kc>true</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>become_user</span><span class=p>:</span><span class=w> </span><span class=s2>&#34;{{ user }}&#34;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>copy</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nt>src</span><span class=p>:</span><span class=w> </span><span class=l>./docker-compose.yml</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nt>dest</span><span class=p>:</span><span class=w> </span><span class=l>/home/{{ user }}/docker-compose.yml</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nt>backup</span><span class=p>:</span><span class=w> </span><span class=kc>false</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>Show result</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>debug</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nt>msg</span><span class=p>:</span><span class=w> </span><span class=s2>&#34;{{ result.stdout }}&#34;</span><span class=w>
+</span></span></span></code></pre></td></tr></table></div></div><p>简单解释一下👆的配置的作用：</p><ul><li>安装依赖，并升级当前所有的软件包，<code>become: true</code> 意味着提权到 sudo（inventory 中配置的账户应该具备 sudo 免密的权限）</li><li>添加一个用户，用户名在 <code>vars</code> 中定义了，替换语法即 &ldquo;{{ user }}&rdquo;</li><li>对用户添加 authorized_keys 用于 ssh 免密登陆，<code>"{{ lookup('onepassword', 'Personal', field='public key') }}"</code> 用于查询 <code>1Password</code> 中的 Personal 项目，字段是 <code>public key</code><ul><li>如果是本地文件的话可以换成：<code>"{{ lookup('file', 'files/'+ 'xxx' + '.key.pub') }}"</code></li></ul></li><li>执行提前写好的 shell 脚本<ul><li>脚本的主要作用如下<ul><li>打开 iptables 防火墙并持久化</li><li>更换 TCP 拥堵算法为 BBR，打开流量转发</li><li>给👆添加的用户添加上 sudo 免密权限</li><li>修改 sshd 配置，更换非标端口并禁止 root 用户密码登陆<ul><li>可以发现我并没有重启 sshd服务，一个小技巧是可以先连接上服务器之后再手动重启，然后再开一个终端连接，如果能连上则意味着修改成功；如果不能则表示存在一些问题，这个时候可以用已经连上的会话进行回滚，以免服务器失联（在忘了修改防火墙的时候这种修改策略非常有效）</li></ul></li><li>修改 hostname</li><li>安装并自启动 docker，添加当前用户到 docker 的组，这样不用每次敲 sudo</li></ul></li><li>在编写自己的脚本的时候可以明确自己的实现方式，尽量使用声明式而非过程式。举个🌰，在添加 sysctl 的时候可以使用 <code>echo 'xxx=yyy' >> /etc/sysctl.conf</code> 进行操作，但这样会有一个问题，当多次执行 ansible 的时候就会添加很多配置，换句话说，这种操作并不是幂等的。而如果脚本中再去处理之前有没有添加过这样的配置这件事情就会变得比较复杂，因此可以换个思路，每次都在 <code>/etc/sysctl.d/</code> 下新建一个配置文件，重新写入期望的配置，这样不论执行多少次配置文件都是预期内的，也是干净的。建议编写自己的脚本的时候都带着这样的思路去实现，对于维护整体的稳定性和简单性有比较大的帮助。</li></ul></li><li>copy 本地的 docker compose 文件到服务器</li><li>打印执行结果</li></ul><p><code>ansible-playbook -i inventory.yaml playbook.yaml</code> 执行一下等待完成即可。</p><p>经过上面的操作之后事情就比较简单了，剩下我需要手动做的事情还有：</p><ul><li>添加本地的 ssh config</li><li>连接到对应的服务器<ul><li>重启 sshd 使配置文件生效</li><li>启动 docker compose，也就是 <code>docker compose up -d</code></li><li>登陆 tailscale <code>sudo tailscale up --accept-routes</code></li><li>添加 /etc/hosts 保证 hostname 有解析</li></ul></li></ul><p>之所以这样选择是这几步操作有的可能导致问题，是高危操作，我希望看到错误日志或者需要干预；有的是无法自动化，得手动处理；有的就是手动操作很简单但写脚本比较复杂。</p><div class=footnotes role=doc-endnotes><hr><ol><li id=fn:1><p><a class=link href=https://blog.d0zingcat.dev/p/how-to-setup-a-new-vpn/ target=_blank rel=noopener>如何配置一台新的翻墙服务器</a>&#160;<a href=#fnref:1 class=footnote-backref role=doc-backlink>&#8617;&#xfe0e;</a></p></li></ol></div></section><footer class=article-footer><section class=article-tags><a href=/tags/automation/>automation</a>
+<a href=/tags/ops/>ops</a>
+<a href=/tags/terrafom/>terrafom</a>
+<a href=/tags/ansible/>ansible</a>
+<a href=/tags/cloud-init/>cloud-init</a></section><section class=article-copyright><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><path d="M14.5 9a3.5 4 0 100 6"/></svg><span>Licensed under CC BY-NC-SA 4.0</span></section></footer><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.css integrity="sha256-J+iAE0sgH8QSz9hpcDxXIftnj65JEZgNhGcgReTTK9s=" crossorigin=anonymous><script src=https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.js integrity="sha256-InsNdER1b2xUewP+pKCUJpkhiqwHgqiPXDlIk7GzBu4=" crossorigin=anonymous defer></script><script src=https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/contrib/auto-render.min.js integrity="sha256-y39Mpg7V3D4lhBX4x6O0bUqTV4pSrfgwEfGKfxkOdgI=" crossorigin=anonymous defer></script><script>window.addEventListener("DOMContentLoaded",()=>{renderMathInElement(document.querySelector(`.article-content`),{delimiters:[{left:"$$",right:"$$",display:!0},{left:"$",right:"$",display:!1},{left:"\\(",right:"\\)",display:!1},{left:"\\[",right:"\\]",display:!0}],ignoredClasses:["gist"]})})</script></article><aside class=related-content--wrapper><h2 class=section-title>相关文章</h2><div class=related-content><div class="flex article-list--tile"><article><a href=/p/k9s-intro/><div class=article-details><h2 class=article-title>K9s Intro</h2></div></a></article><article><a href=/p/vpn-connect-work-home/><div class=article-details><h2 class=article-title>使用VPN组建局域网打通工作和家庭网络</h2></div></a></article><article><a href=/p/1password-ssh-key-in-practice/><div class=article-details><h2 class=article-title>1password SSH Key 管理实践</h2></div></a></article><article><a href=/p/how-to-enbale-gpg-sign-for-github/><div class=article-details><h2 class=article-title>如何给Github commit启用GPG Sign签名</h2></div></a></article></div></div></aside><script src=https://giscus.app/client.js data-repo=d0zingcat/d0zingcat.github.io data-repo-id=R_kgDOH1Q2fQ data-category=General data-category-id=DIC_kwDOH1Q2fc4CQ4fY data-mapping=pathname data-strict=0 data-reactions-enabled=1 data-emit-metadata=0 data-input-position=top data-theme=light data-lang=en crossorigin=anonymous async></script>
+<script>function setGiscusTheme(e){let t=document.querySelector("iframe.giscus-frame");t&&t.contentWindow.postMessage({giscus:{setConfig:{theme:e}}},"https://giscus.app")}(function(){addEventListener("message",t=>{if(event.origin!=="https://giscus.app")return;e()}),window.addEventListener("onColorSchemeChange",e);function e(){setGiscusTheme(document.documentElement.dataset.scheme==="light"?"light":"dark_dimmed")}})()</script><footer class=site-footer><section class=copyright>&copy;
+2022 -
+2023 For(;;)</section><section class=powerby>Built with ❤️ by @d0zingcat<br>Built with <a href=https://gohugo.io/ target=_blank rel=noopener>Hugo</a><br>主题 <b><a href=https://github.com/CaiJimmy/hugo-theme-stack target=_blank rel=noopener data-version=3.20.0>Stack</a></b> 由 <a href=https://jimmycai.com target=_blank rel=noopener>Jimmy</a> 设计</section></footer><div class=pswp tabindex=-1 role=dialog aria-hidden=true><div class=pswp__bg></div><div class=pswp__scroll-wrap><div class=pswp__container><div class=pswp__item></div><div class=pswp__item></div><div class=pswp__item></div></div><div class="pswp__ui pswp__ui--hidden"><div class=pswp__top-bar><div class=pswp__counter></div><button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+<button class="pswp__button pswp__button--share" title=Share></button>
+<button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+<button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button><div class=pswp__preloader><div class=pswp__preloader__icn><div class=pswp__preloader__cut><div class=pswp__preloader__donut></div></div></div></div></div><div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap"><div class=pswp__share-tooltip></div></div><button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)"></button>
+<button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)"></button><div class=pswp__caption><div class=pswp__caption__center></div></div></div></div></div><script src=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo=" crossorigin=anonymous defer></script><script src=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU=" crossorigin=anonymous defer></script><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css crossorigin=anonymous><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css crossorigin=anonymous></main></div><script src=https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z+KMkF24hUW8WePSA9HM=" crossorigin=anonymous></script><script type=text/javascript src=/ts/main.js defer></script>
+<script>(function(){const e=document.createElement("link");e.href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap",e.type="text/css",e.rel="stylesheet",document.head.appendChild(e)})()</script></body></html>

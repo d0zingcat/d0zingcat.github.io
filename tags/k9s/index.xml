@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>k9s on For(;;)</title><link>https://blog.d0zingcat.dev/tags/k9s/</link><description>Recent content in k9s on For(;;)</description><generator>Hugo -- gohugo.io</generator><language>zh-cn</language><lastBuildDate>Tue, 29 Aug 2023 18:05:22 +0800</lastBuildDate><atom:link href="https://blog.d0zingcat.dev/tags/k9s/index.xml" rel="self" type="application/rss+xml"/><item><title>K9s Intro</title><link>https://blog.d0zingcat.dev/p/k9s-intro/</link><pubDate>Tue, 29 Aug 2023 18:05:22 +0800</pubDate><guid>https://blog.d0zingcat.dev/p/k9s-intro/</guid><description>&lt;h1 id="k9s-快速上手指南">K9S 快速上手指南&lt;/h1>
+&lt;p>👉&lt;a class="link" href="https://k9scli.io/" target="_blank" rel="noopener"
+>官网地址&lt;/a>&lt;/p>
+&lt;blockquote>
+&lt;p>如果是 Mac 用户的请首先安装 &lt;a class="link" href="https://brew.sh/" target="_blank" rel="noopener"
+>homebrew&lt;/a> 。有余力的话可以阅读官方的文档，也可以直接 Google 别人写的一些教程，对于了解这个工具会有很大的帮助；如果只是轻度使用的话，那么可以直接阅读下面的教程，我会介绍一些我日常中使用的 cases。&lt;/p>
+&lt;/blockquote>
+&lt;h1 id="一句话描述">一句话描述&lt;/h1>
+&lt;p>一个终端下的 kubectl 的可视化界面，可以快速上手和快捷地查看日志、pod等操作而无需记忆复杂的命令。&lt;/p>
+&lt;h1 id="对比-kubectl">对比 kubectl&lt;/h1>
+&lt;ul>
+&lt;li>Pros
+&lt;ul>
+&lt;li>可视化&lt;/li>
+&lt;li>满足大部分 k8s 运维场景/功能的同时操作非常简便&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>Cons
+&lt;ul>
+&lt;li>需要学习基本操作，且此操作不能复用在其他场合/工具&lt;/li>
+&lt;li>第一次连接初始化比较慢（公司集群在海外决定，暂无很好的优化办法）
+&lt;ul>
+&lt;li>但连接之后是长链接，在链接被关闭之前界面会一直保持，操作相对比较顺畅&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ul>
+&lt;h1 id="安装及配置">安装及配置&lt;/h1>
+&lt;ol>
+&lt;li>安装&lt;/li>
+&lt;/ol>
+&lt;p>&lt;code>brew install k9s&lt;/code>&lt;/p>
+&lt;ol>
+&lt;li>申请相关的 k8s 权限&lt;/li>
+&lt;li>配置 k8s config 文件
+&lt;ol>
+&lt;li>一般可以得到一个 config 文件&lt;/li>
+&lt;li>把上一步的文件存储在 &lt;code>$HOME/.kube/config&lt;/code> 路径&lt;/li>
+&lt;li>&lt;a class="link" href="https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/" target="_blank" rel="noopener"
+>拓展阅读&lt;/a>&lt;/li>
+&lt;/ol>
+&lt;/li>
+&lt;li>新开一个窗口进行操作,输入&lt;code>k9s&lt;/code> 回车启动
+&lt;ol>
+&lt;li>&lt;code>k9s -n {namespace}&lt;/code> 直接访问具体某个 namespace
+&lt;ol>
+&lt;li>也可以进入了程序之后切换 namespace&lt;/li>
+&lt;/ol>
+&lt;/li>
+&lt;li>&lt;code>k9s -c {pod_name}&lt;/code> 直接访问具体某个 pod&lt;/li>
+&lt;/ol>
+&lt;/li>
+&lt;/ol>
+&lt;h1 id="常用操作">常用操作&lt;/h1>
+&lt;h2 id="通用操作">通用操作&lt;/h2>
+&lt;ul>
+&lt;li>观察页面置顶的展示，已经提示了一些高频操作的快捷键&lt;/li>
+&lt;li>&lt;code>/&lt;/code> 是搜索，输入后回车，也叫做 filter 模式&lt;/li>
+&lt;li>&lt;code>Esc&lt;/code> 是退出&lt;/li>
+&lt;li>&lt;code>?&lt;/code> 是查看帮助，包括全量的快捷键&lt;/li>
+&lt;li>&lt;code>:&lt;/code> 是全局命令，例如 &lt;code>:ns&lt;/code> 即可进入切换 namespace 的界面
+&lt;ul>
+&lt;li>可以用 tab 补全&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ul>
+&lt;h2 id="默认页面">默认页面&lt;/h2>
+&lt;ul>
+&lt;li>最常用的操作在&lt;strong>页面上方已经置顶&lt;/strong>，建议好好阅读一下
+&lt;ul>
+&lt;li>也有一些关键信息
+&lt;ul>
+&lt;li>k8s 集群的版本&lt;/li>
+&lt;li>CPU/MEM 的使用情况&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>使用上下方向键切换具体的pod
+&lt;ul>
+&lt;li>也可以 jk vim-like 键位操作
+&lt;ul>
+&lt;li>&lt;code>j&lt;/code> = ⬆️&lt;/li>
+&lt;li>&lt;code>k&lt;/code> = ⬇️&lt;/li>
+&lt;li>&lt;code>gg&lt;/code> = 最上面&lt;/li>
+&lt;li>&lt;code>shift+g&lt;/code> = 最下面&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>也可以鼠标滚轮上下滑动操作&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>蓝色的表示正常，红色的表示 pod 没有就绪
+&lt;ul>
+&lt;li>指标一一做了展示，可以看到
+&lt;ul>
+&lt;li>当前的状态&lt;/li>
+&lt;li>CPU的实际使用&lt;/li>
+&lt;li>Request占比（%CPU/R)&lt;/li>
+&lt;li>Limit占比（%CPU/L）&lt;/li>
+&lt;li>memory 同理&lt;/li>
+&lt;li>Pod IP&lt;/li>
+&lt;li>运行在哪个 Node&lt;/li>
+&lt;li>Age&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>不定期刷新页面会有上下箭头指示 pod 的 cpu/mem 的变化情况&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>&lt;code>shift+f&lt;/code> 可以做端口转发
+&lt;ul>
+&lt;li>填写好 container 的 port 、local port 回车选中 Ok 即可在退出 k9s 之前都生效&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>&lt;code>d&lt;/code> 可以 describe pod，对于 pod 无法启动（例如卡在 init 状态会 debug 会有很大的帮助）
+&lt;ul>
+&lt;li>主要关注 &lt;code>State&lt;/code> 下的 &lt;code>Reason&lt;/code> 和 &lt;code>Exit Code&lt;/code> 即可，&lt;strong>对于排查问题非常有帮助！&lt;/strong>&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>移动到具体的 pod 按 &lt;code>l&lt;/code>（小写 L）即可查看 pod 中所有 container 的日志
+&lt;ul>
+&lt;li>&lt;code>p&lt;/code> 查看之前的 pod 的日志（如果 pod一直异常重启可以通过这个方式查看到前一次重启前的日志），&lt;strong>对于排查问题非常有帮助！&lt;/strong>&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>选中具体某个 pod &lt;code>回车&lt;/code>即可进入查看有哪些 container&lt;/li>
+&lt;li>&lt;code>s&lt;/code> 即可进入 pod 中第一个 container 的 命令行&lt;/li>
+&lt;li>&lt;code>&amp;lt;ctrl&amp;gt;+k&lt;/code> = &lt;code>kubectl delete pod xxx&lt;/code> ，相当于杀死某个 pod （&lt;code>kill -9&lt;/code> ），但 pod 被杀了之后会重启自动拉起&lt;/li>
+&lt;li>&lt;code>&amp;lt;ctrl&amp;gt;+r&lt;/code> 刷新页面&lt;/li>
+&lt;li>&lt;code>y&lt;/code> 可以查看 对应的 yaml 定义
+&lt;ul>
+&lt;li>高级玩家可以尝试&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>上面提到的快捷键同样适用于 container&lt;/li>
+&lt;/ul>
+&lt;p>&lt;img src="https://blog.d0zingcat.dev/p/k9s-intro/main.png"
+width="2866"
+height="1594"
+srcset="https://blog.d0zingcat.dev/p/k9s-intro/main_hud834ff41a09be3e22ec5d27b6a7c8c56_569638_480x0_resize_box_3.png 480w, https://blog.d0zingcat.dev/p/k9s-intro/main_hud834ff41a09be3e22ec5d27b6a7c8c56_569638_1024x0_resize_box_3.png 1024w"
+loading="lazy"
+alt="Untitled"
+class="gallery-image"
+data-flex-grow="179"
+data-flex-basis="431px"
+>&lt;/p>
+&lt;p>&lt;img src="https://blog.d0zingcat.dev/p/k9s-intro/portforward.png"
+width="3818"
+height="2044"
+srcset="https://blog.d0zingcat.dev/p/k9s-intro/portforward_hu9bdb1c3ccb6ab21b5d4b4cdf8c7058b1_342758_480x0_resize_box_3.png 480w, https://blog.d0zingcat.dev/p/k9s-intro/portforward_hu9bdb1c3ccb6ab21b5d4b4cdf8c7058b1_342758_1024x0_resize_box_3.png 1024w"
+loading="lazy"
+alt="Untitled"
+class="gallery-image"
+data-flex-grow="186"
+data-flex-basis="448px"
+>&lt;/p>
+&lt;h2 id="日志界面">日志界面&lt;/h2>
+&lt;ul>
+&lt;li>&lt;code>/&lt;/code> 输入即可过滤日志关键词 回车即可显示&lt;/li>
+&lt;li>&lt;code>w&lt;/code> 启用长文本换行展示（直接页面敲击），再按关闭&lt;/li>
+&lt;li>&lt;code>5&lt;/code> 启用查看最近 30m 的日志，其他时间见置顶
+&lt;ul>
+&lt;li>&lt;code>0&lt;/code> 看最尾部的日志&lt;/li>
+&lt;li>&lt;code>1&lt;/code> 看最头部的日志&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>&lt;code>t&lt;/code> 展示时间戳，再按关闭&lt;/li>
+&lt;li>&lt;code>f&lt;/code> 全屏展示，再按退出&lt;/li>
+&lt;li>&lt;code>s&lt;/code> 关闭日志滚动（默认启用），再按启用&lt;/li>
+&lt;/ul>
+&lt;p>&lt;img src="https://blog.d0zingcat.dev/p/k9s-intro/log.png"
+width="3838"
+height="2040"
+srcset="https://blog.d0zingcat.dev/p/k9s-intro/log_hubea09beb2738234b89186a03301f4bca_1088617_480x0_resize_box_3.png 480w, https://blog.d0zingcat.dev/p/k9s-intro/log_hubea09beb2738234b89186a03301f4bca_1088617_1024x0_resize_box_3.png 1024w"
+loading="lazy"
+alt="Untitled"
+class="gallery-image"
+data-flex-grow="188"
+data-flex-basis="451px"
+>&lt;/p></description></item></channel></rss>

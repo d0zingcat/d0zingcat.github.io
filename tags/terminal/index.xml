@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>terminal on For(;;)</title><link>https://blog.d0zingcat.dev/tags/terminal/</link><description>Recent content in terminal on For(;;)</description><generator>Hugo -- gohugo.io</generator><language>zh-cn</language><lastBuildDate>Fri, 19 Aug 2022 17:09:08 +0800</lastBuildDate><atom:link href="https://blog.d0zingcat.dev/tags/terminal/index.xml" rel="self" type="application/rss+xml"/><item><title>如何给Github commit启用GPG Sign签名</title><link>https://blog.d0zingcat.dev/p/how-to-enbale-gpg-sign-for-github/</link><pubDate>Fri, 19 Aug 2022 17:09:08 +0800</pubDate><guid>https://blog.d0zingcat.dev/p/how-to-enbale-gpg-sign-for-github/</guid><description>&lt;h2 id="添加签名">添加签名&lt;/h2>
+&lt;p>如果实现了GPG Sign签名，那么你在Github上面的提交应该是像这个样子的：
+&lt;img src="https://blog.d0zingcat.dev/p/how-to-enbale-gpg-sign-for-github/gpg-sign-github.png"
+width="458"
+height="302"
+srcset="https://blog.d0zingcat.dev/p/how-to-enbale-gpg-sign-for-github/gpg-sign-github_hu78c1879b79a7d0bc6b0b0b2ebb45ee68_39173_480x0_resize_box_3.png 480w, https://blog.d0zingcat.dev/p/how-to-enbale-gpg-sign-for-github/gpg-sign-github_hu78c1879b79a7d0bc6b0b0b2ebb45ee68_39173_1024x0_resize_box_3.png 1024w"
+loading="lazy"
+class="gallery-image"
+data-flex-grow="151"
+data-flex-basis="363px"
+>&lt;/p>
+&lt;p>首先你应该把Github官方的文档（左边栏关于添加GPG签名的所有文档）都通读或者操作一遍&lt;sup id="fnref:1">&lt;a href="#fn:1" class="footnote-ref" role="doc-noteref">1&lt;/a>&lt;/sup> 。因为所有你可能会遇到的情况 github 都已经很贴心地写了文档，而且这些文档都非常地简单易懂。
+然后你就可以仿照下面提到命令进行操作：&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">gpg --full-generate-key
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># use ecc&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">gpg --list-secret-keys --keyid-format&lt;span class="o">=&lt;/span>short
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># choose the id which line begins with ssb behind cv25519&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">gpg --armor --export KEYID &lt;span class="p">|&lt;/span> pbcopy
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># add to github ssh and gpg keys&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># config git to use gpg key to sign commits&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">git config --global commit.gpgsign &lt;span class="nb">true&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">git config --global user.signingkey KEYID
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># add to ~/.zshrc&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nb">export&lt;/span> &lt;span class="nv">GPG_TTY&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="k">$(&lt;/span>tty&lt;span class="k">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># install plenary-mac&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">brew install pinentry-mac
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;h2 id="备份及还原">备份及还原&lt;/h2>
+&lt;p>可以顺带一提的是 GPG 的备份，可以简单通过：&lt;code>gpg --export-secret-keys --armor --output privkey.asc user-id&lt;/code> 进行备份，&lt;code>--armor&lt;/code>的意思是转换二进制为可读的文字，这样可以方便打印出来，也可以转换成二维码之后再打印出来，因为最好的备份方式还是物理备份（如果这张纸不幸被偷那么另说）。我的话是直接丢在 Google Drive 上面的，这个可能是我盲目自信了。&lt;/p>
+&lt;p>根据资料是这样的：&lt;code>gpg --import privkey.asc&lt;/code>
+应该还需要一些信任的操作，可以具体查询下面提供的参考资料。&lt;/p>
+&lt;h2 id="补充">补充&lt;/h2>
+&lt;p>事实上，1Password这个密码管理器已经支持了 SSH 的托管，而 Github 也已经支持了 SSH Commit Signing，换言之也可以直接通过更加现代化和安全的方式来做commit的签名，具体可以参考：&lt;/p>
+&lt;p>&lt;a class="link" href="https://github.blog/changelog/2022-08-23-ssh-commit-verification-now-supported/" target="_blank" rel="noopener"
+>SSH commit verification now supported&lt;/a>&lt;/p>
+&lt;p>&lt;a class="link" href="https://blog.1password.com/git-commit-signing/" target="_blank" rel="noopener"
+>git commit signing&lt;/a>&lt;/p>
+&lt;p>&lt;a class="link" href="https://developer.1password.com/docs/ssh/" target="_blank" rel="noopener"
+>1Password for SSH &amp;amp; Git&lt;/a>&lt;/p>
+&lt;h1 id="参考">参考&lt;/h1>
+&lt;p>&lt;a class="link" href="https://samuelsson.dev/sign-git-commits-on-github-with-gpg-in-macos/" target="_blank" rel="noopener"
+>Sign git commits on GitHub with GPG in macOS&lt;/a>&lt;/p>
+&lt;p>&lt;a class="link" href="https://gist.github.com/troyfontaine/18c9146295168ee9ca2b30c00bd1b41e" target="_blank" rel="noopener"
+>Methods of Signing with GPG on MacOS&lt;/a>&lt;/p>
+&lt;p>&lt;a class="link" href="https://wiki.archlinux.org/title/GnuPG_%28%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87%29#%E5%A4%87%E4%BB%BD%E4%BD%A0%E7%9A%84%E7%A7%81%E9%92%A5" target="_blank" rel="noopener"
+>GnuPG (简体中文)&lt;/a>&lt;/p>
+&lt;p>&lt;a class="link" href="https://davesteele.github.io/gpg/2014/09/20/anatomy-of-a-gpg-key/" target="_blank" rel="noopener"
+>Anatomy of a GPG Key&lt;/a>&lt;/p>
+&lt;p>&lt;a class="link" href="https://www.jwillikers.com/backup-and-restore-a-gpg-key" target="_blank" rel="noopener"
+>backup-and-restore-a-gpg-key&lt;/a>&lt;/p>
+&lt;p>&lt;a class="link" href="https://linuxconfig.org/how-to-backup-gpg-keys-on-paper" target="_blank" rel="noopener"
+>How to backup gpg keys on paper&lt;/a>&lt;/p>
+&lt;p>&lt;a class="link" href="https://codex.so/gpg-verification-github" target="_blank" rel="noopener"
+>Setting up a GPG verification on the GitHub&lt;/a>&lt;/p>
+&lt;p>&lt;a class="link" href="https://coderwall.com/p/tx_1-g/gpg-change-email-for-key-in-pgp-key-servers" target="_blank" rel="noopener"
+>GPG: Change email for key in PGP key servers&lt;/a>&lt;/p>
+&lt;div class="footnotes" role="doc-endnotes">
+&lt;hr>
+&lt;ol>
+&lt;li id="fn:1">
+&lt;p>&lt;a class="link" href="https://docs.github.com/en/authentication/managing-commit-signature-verification/about-commit-signature-verification" target="_blank" rel="noopener"
+>Commit signature verification&lt;/a>&amp;#160;&lt;a href="#fnref:1" class="footnote-backref" role="doc-backlink">&amp;#x21a9;&amp;#xfe0e;&lt;/a>&lt;/p>
+&lt;/li>
+&lt;/ol>
+&lt;/div></description></item></channel></rss>

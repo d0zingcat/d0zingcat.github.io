@@ -1,0 +1,779 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>vpn on For(;;)</title><link>https://blog.d0zingcat.dev/tags/vpn/</link><description>Recent content in vpn on For(;;)</description><generator>Hugo -- gohugo.io</generator><language>zh-cn</language><lastBuildDate>Tue, 09 May 2023 01:09:01 +0800</lastBuildDate><atom:link href="https://blog.d0zingcat.dev/tags/vpn/index.xml" rel="self" type="application/rss+xml"/><item><title>Tailscale Intro</title><link>https://blog.d0zingcat.dev/p/tailscale-intro/</link><pubDate>Tue, 09 May 2023 01:09:01 +0800</pubDate><guid>https://blog.d0zingcat.dev/p/tailscale-intro/</guid><description>&lt;blockquote>
+&lt;p>在这篇文章 &lt;a class="link" href="https://blog.d0zingcat.dev/p/vpn-connect-work-home/" target="_blank" rel="noopener"
+>使用VPN组建局域网打通工作和家庭网络&lt;/a>我有详细的介绍我目前的需求和原因，当前的实现方式，以及期望达到的效果，在阅读本篇文章之前可以先把这篇文章先阅读一下会更加有助于对本篇文章的理解。&lt;/p>
+&lt;/blockquote>
+&lt;h1 id="前情">前情&lt;/h1>
+&lt;p>我考虑 Tailscale 的几个因素：&lt;/p>
+&lt;ul>
+&lt;li>客户端开源且技术能力强（博客和文档写的非常专业）&lt;/li>
+&lt;li>点对点星型组网，自带 NAT 穿透&lt;/li>
+&lt;li>超过 zerotier 的使用体验（支持简单组网、自定义 DNS、中转节点、子网分配）&lt;/li>
+&lt;li>跨平台（甚至手机也可以用）&lt;/li>
+&lt;li>社区流行&lt;/li>
+&lt;li>基于 Wireguard 这个已经进 Linux 内核的协议&lt;/li>
+&lt;/ul>
+&lt;p>就这些优点就已经足以让我对它产生浓厚的兴趣并进行尝试了。&lt;/p>
+&lt;h1 id="安装">安装&lt;/h1>
+&lt;p>&lt;a class="link" href="https://tailscale.com/kb/installation/" target="_blank" rel="noopener"
+>安装教程&lt;/a>&lt;/p>
+&lt;p>不具体展开，我的例子是 Mac 直接 App Store 安装（即可配备图形界面），Linux 直接使用官方的脚本进行安装。
+Mac 安装之后点击 login 使用自己账号登录并查看对应的连接信息，点击 Connect 即可连接设备；
+Linux 则需要使用命令 &lt;code>sudo tailscale up&lt;/code> 进行上线，会打印出登录链接，复制到浏览器中登录账号连接即可。
+Mac 需要在 Settings 勾选 Start at login 配置开机自启（建议开启），Linux 则需要使用命令 &lt;code>sudo systemctl enable tailscaled&lt;/code>&lt;/p>
+&lt;p>上线完成后关键命令为：&lt;/p>
+&lt;p>&lt;code>sudo tailscale status&lt;/code> 即可查看所有的私网下的设备信息&lt;/p>
+&lt;p>&lt;code>sudo tailscale netcheck&lt;/code> 即可查看当前节点和网络中的中转服务器的连接情况&lt;/p>
+&lt;h1 id="自建-derp-节点">自建 Derp 节点&lt;/h1>
+&lt;p>虽然 tailscale 自带内网穿透，但总归有一些墙是穿不透的，可以阅读这篇文章：&lt;a class="link" href="https://tailscale.com/blog/how-nat-traversal-works/" target="_blank" rel="noopener"
+>How NAT Traversal Works&lt;/a>，对于无法正常穿透的网络状况，tailscale 只能选择公网服务器转发的方式实现穿墙（例如 FRP）。但很遗憾的是由于各种原因 tailscale 并没有在中国大陆提供一台转发的服务器，因此如果存在这样网络环境的机器，即便有 tailscale 帮忙转发，速度也是巨慢无比（很大程度取决于访问最近的一台转发服务器的速度，可能是香港或者日本的机器，但过去的线路都很一般），基本是不可用的，因此我们就需要自建转发服务器，以实现最快速度的访问。&lt;/p>
+&lt;p>Derp 就等于 Zerotier 中的 Moon 节点，但是机制上存在一些差异，例如 Moon 是基于 Zerotier 自定义的协议，而 Derp 是基于 HTTPS 的；Moon 的机制是黑盒，而 Derp 是先通过中转连接两端后再升级到 NAT （如果可以打洞的话）；从我的角度来看 tailscale 的方案会更加稳健和可靠，也能更加应对各种恶劣的网络环境。&lt;/p>
+&lt;p>首先需要购买一台国内的服务器，以我为例，我购买的是 腾讯云-云产品-轻量应用服务器 shanghai-2C-2G-40G-4Mbps 一个月 300 GB 流量（真黑，早知道早期的轻量云就一直续费了，现在的机器配置一降再降），费用是一年 452 人民币。配置很低，但是跑 Docker 和 Derp 足够了（我还用来做 Syncthing 的同步节点），只要不是长时间上传大文件，我的主要场景是 macOS 的远程连接是足够了，速度也还可以。&lt;/p>
+&lt;p>Docker 安装配置不多说，参考官方教程：&lt;a class="link" href="https://docs.docker.com/engine/install/debian/" target="_blank" rel="noopener"
+>Install Docker Engine on Debian&lt;/a>
+同样建议使用 &lt;code>sudo systemctl enable docker&lt;/code> 设置开机自启，以及使用 &lt;code>sudo usermod -aG docker $USER&lt;/code> 添加当前用户到 docker 组中，这样可以不用 sudo 来调用 docker 命令。&lt;/p>
+&lt;p>上面有提到，Derp 基于 HTTPS，换言之我们需要有一个 SSL 证书。Derp 官方的镜像据说支持 Caddy 的拓展，理论上来讲是可以自动续获取并续签证书的，但我并没有实验成功，可能还是和服务器厂商的一些网络策略有关系（中国大陆没有备案的域名不允许解析到服务器上，且不能使用 80 443 这类标准端口，即便是 https 一样也会被检测 SNI 以实现拦截），但我显然不愿意再备案一次了。于是换个方法，直接使用腾讯云提供的一年免费 SSL 证书，在 云产品-SSL证书 下可以找到，基于 TrustAsia 一年有效期，一个账号最多申请 20 个，也足够了，到期了续期有点点麻烦罢了。作为域名的持有者我们很方便地可以通过 DNS 验证的方式验证域名，正常情况下签发证书很快，验证后 5 Min 就能完成签发，然后下载 nginx 的证书即可。&lt;/p>
+&lt;p>可以直接参考我的 docker-compose.yml 附赠 syncthing（额外说一句，如果你有多个设备且需要多设备之间数据同步，文件数量比较巨大，且你希望尽可能快速地点对点地双向同步，那你就应该考虑使用这个而不是 iCloud 或者其他各种 Drive）&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;span class="lnt">15
+&lt;/span>&lt;span class="lnt">16
+&lt;/span>&lt;span class="lnt">17
+&lt;/span>&lt;span class="lnt">18
+&lt;/span>&lt;span class="lnt">19
+&lt;/span>&lt;span class="lnt">20
+&lt;/span>&lt;span class="lnt">21
+&lt;/span>&lt;span class="lnt">22
+&lt;/span>&lt;span class="lnt">23
+&lt;/span>&lt;span class="lnt">24
+&lt;/span>&lt;span class="lnt">25
+&lt;/span>&lt;span class="lnt">26
+&lt;/span>&lt;span class="lnt">27
+&lt;/span>&lt;span class="lnt">28
+&lt;/span>&lt;span class="lnt">29
+&lt;/span>&lt;span class="lnt">30
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-yaml" data-lang="yaml">&lt;span class="line">&lt;span class="cl">&lt;span class="nt">version&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="s1">&amp;#39;3&amp;#39;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="nt">services&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">syncthing&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">container_name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">syncthing&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">image&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">syncthing/syncthing&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">environment&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">PGID&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">1000&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">PUID&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">1000&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">network_mode&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">host&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">restart&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">always&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">volumes&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>- &lt;span class="l">./syncthing/:/var/syncthing/&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">derper&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">container_name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">derper&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">image&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">fredliang/derper&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">restart&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">always&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">volumes&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>- &lt;span class="l">./derper/cert:/cert&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>- &lt;span class="l">/var/run/tailscale/tailscaled.sock:/var/run/tailscale/tailscaled.sock&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="c"># 共享 tailscaled.sock&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">ports&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>- &lt;span class="m">3478&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="m">3478&lt;/span>&lt;span class="l">/udp&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>- &lt;span class="m">23479&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="m">23479&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">environment&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">DERP_DOMAIN&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>{&lt;span class="l">domain}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">DERP_ADDR&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="s2">&amp;#34;:23479&amp;#34;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">DERP_CERT_MODE&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">manual&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">DERP_CERT_DIR&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">/cert&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">DERP_VERIFY_CLIENTS&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="s2">&amp;#34;true&amp;#34;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="nt">volumes&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">logvolume01&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>{}&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>需要注意的是 cert 目录挂载的是前面下载的 nginx 的证书（有四个文件），需要一一重命名为 {domain}.crt {domain}.key {domain}.pem
+&lt;code>docker compose up -d&lt;/code> 启动即可。
+然后需要去 tailscale 的 &lt;a class="link" href="https://login.tailscale.com/admin/acls" target="_blank" rel="noopener"
+>Admin Console-Access Control&lt;/a> 配置对应的 derp 服务器，例如：&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;span class="lnt">15
+&lt;/span>&lt;span class="lnt">16
+&lt;/span>&lt;span class="lnt">17
+&lt;/span>&lt;span class="lnt">18
+&lt;/span>&lt;span class="lnt">19
+&lt;/span>&lt;span class="lnt">20
+&lt;/span>&lt;span class="lnt">21
+&lt;/span>&lt;span class="lnt">22
+&lt;/span>&lt;span class="lnt">23
+&lt;/span>&lt;span class="lnt">24
+&lt;/span>&lt;span class="lnt">25
+&lt;/span>&lt;span class="lnt">26
+&lt;/span>&lt;span class="lnt">27
+&lt;/span>&lt;span class="lnt">28
+&lt;/span>&lt;span class="lnt">29
+&lt;/span>&lt;span class="lnt">30
+&lt;/span>&lt;span class="lnt">31
+&lt;/span>&lt;span class="lnt">32
+&lt;/span>&lt;span class="lnt">33
+&lt;/span>&lt;span class="lnt">34
+&lt;/span>&lt;span class="lnt">35
+&lt;/span>&lt;span class="lnt">36
+&lt;/span>&lt;span class="lnt">37
+&lt;/span>&lt;span class="lnt">38
+&lt;/span>&lt;span class="lnt">39
+&lt;/span>&lt;span class="lnt">40
+&lt;/span>&lt;span class="lnt">41
+&lt;/span>&lt;span class="lnt">42
+&lt;/span>&lt;span class="lnt">43
+&lt;/span>&lt;span class="lnt">44
+&lt;/span>&lt;span class="lnt">45
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-json" data-lang="json">&lt;span class="line">&lt;span class="cl">&lt;span class="c1">// Example/default ACLs for unrestricted connections.
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">&lt;/span>&lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="c1">// Declare static groups of users beyond those in the identity service.
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">&lt;/span> &lt;span class="nt">&amp;#34;groups&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;group:example&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="p">[&lt;/span>&lt;span class="s2">&amp;#34;user1@example.com&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="s2">&amp;#34;user2@example.com&amp;#34;&lt;/span>&lt;span class="p">],&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">},&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="c1">// Declare convenient hostname aliases to use in place of IP addresses.
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">&lt;/span> &lt;span class="nt">&amp;#34;hosts&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;example-host-1&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;100.100.100.100&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">},&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="c1">// Access control lists.
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">&lt;/span> &lt;span class="nt">&amp;#34;acls&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="p">[&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="c1">// Match absolutely everything.
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">&lt;/span> &lt;span class="c1">// Comment this section out if you want to define specific restrictions.
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">&lt;/span> &lt;span class="p">{&lt;/span>&lt;span class="nt">&amp;#34;action&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;accept&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="nt">&amp;#34;src&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="p">[&lt;/span>&lt;span class="s2">&amp;#34;*&amp;#34;&lt;/span>&lt;span class="p">],&lt;/span> &lt;span class="nt">&amp;#34;dst&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="p">[&lt;/span>&lt;span class="s2">&amp;#34;*:*&amp;#34;&lt;/span>&lt;span class="p">]},&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">],&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;ssh&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="p">[&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="c1">// Allow all users to SSH into their own devices in check mode.
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">&lt;/span> &lt;span class="c1">// Comment this section out if you want to define specific restrictions.
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;action&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;check&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;src&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="p">[&lt;/span>&lt;span class="s2">&amp;#34;autogroup:members&amp;#34;&lt;/span>&lt;span class="p">],&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;dst&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="p">[&lt;/span>&lt;span class="s2">&amp;#34;autogroup:self&amp;#34;&lt;/span>&lt;span class="p">],&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;users&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="p">[&lt;/span>&lt;span class="s2">&amp;#34;autogroup:nonroot&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="s2">&amp;#34;root&amp;#34;&lt;/span>&lt;span class="p">],&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">},&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">],&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;derpMap&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;Regions&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;900&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;RegionID&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="mi">900&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;RegionCode&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;myderp&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;Nodes&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="p">[&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;Name&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;1&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;RegionID&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="mi">900&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;HostName&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;{domain}&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;DERPPort&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="mi">23479&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">},&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">],&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">},&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">},&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">},&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>保存之后挑选一台节点使用 &lt;code>sudo tailscale netcheck&lt;/code> 即可发现已经自动连接了 derp 节点，而且速度非常感人&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;span class="lnt">15
+&lt;/span>&lt;span class="lnt">16
+&lt;/span>&lt;span class="lnt">17
+&lt;/span>&lt;span class="lnt">18
+&lt;/span>&lt;span class="lnt">19
+&lt;/span>&lt;span class="lnt">20
+&lt;/span>&lt;span class="lnt">21
+&lt;/span>&lt;span class="lnt">22
+&lt;/span>&lt;span class="lnt">23
+&lt;/span>&lt;span class="lnt">24
+&lt;/span>&lt;span class="lnt">25
+&lt;/span>&lt;span class="lnt">26
+&lt;/span>&lt;span class="lnt">27
+&lt;/span>&lt;span class="lnt">28
+&lt;/span>&lt;span class="lnt">29
+&lt;/span>&lt;span class="lnt">30
+&lt;/span>&lt;span class="lnt">31
+&lt;/span>&lt;span class="lnt">32
+&lt;/span>&lt;span class="lnt">33
+&lt;/span>&lt;span class="lnt">34
+&lt;/span>&lt;span class="lnt">35
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-fallback" data-lang="fallback">&lt;span class="line">&lt;span class="cl">Report:
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> * UDP: true
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> * IPv4: yes, 116.233.104.155:47603
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> * IPv6: no, but OS has support
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> * MappingVariesByDestIP: false
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> * HairPinning: false
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> * PortMapping: UPnP, PCP
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> * CaptivePortal: false
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> * Nearest DERP:
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> * DERP latency:
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> - myderp: 22.3ms () &amp;lt;&amp;lt;&amp;lt;&amp;lt;&amp;lt;&amp;lt;&amp;lt;&amp;lt;******* this one
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> - tok: 68.9ms (Tokyo)
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> - sfo: 135.6ms (San Francisco)
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> - lax: 140.1ms (Los Angeles)
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> - sea: 160.2ms (Seattle)
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> - den: 176.8ms (Denver)
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> - hnl: 185ms (Honolulu)
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> - ord: 195.1ms (Chicago)
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> - dfw: 195.1ms (Dallas)
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> - sin: 195.3ms (Singapore)
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> - mia: 203.5ms (Miami)
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> - tor: 204.2ms (Toronto)
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> - hkg: 220.4ms (Hong Kong)
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> - lhr: 222.1ms (London)
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> - blr: 230.8ms (Bangalore)
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> - nyc: 237ms (New York City)
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> - waw: 247.4ms (Warsaw)
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> - par: 249.8ms (Paris)
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> - ams: 252.2ms (Amsterdam)
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> - fra: 275.4ms (Frankfurt)
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> - syd: 281.1ms (Sydney)
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> - mad: 286.1ms (Madrid)
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> - sao: 324.9ms (São Paulo)
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> - dbi: 330.7ms (Dubai)
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> - jnb: (Johannesburg)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>到此 derp 节点就搭建好了。另外可以注意的是如果有子网的访问需求，例如我的例子：&lt;/p>
+&lt;p>家庭 LAN：192.168.2.1/24&lt;/p>
+&lt;p>公司 LAN：192.168.1.1/24&lt;/p>
+&lt;p>当公司需要访问家中的 mac 设备的时候，限于 macOS 系统的机制会自动休眠，除非禁用休眠（太伤了，不利于电池也不利于续航，损耗太大），否则只剩下一条路，万幸 macOS 支持网络唤醒，换言之休眠不是问题，关键只要有一台局域网内的设备通过局域网地址来访问 mac 即可将其唤醒。好在我还有个 Homelab 安装了 Debian，专门用于内部网络的跳板。可以参考&lt;a class="link" href="https://blog.d0zingcat.dev/p/how-to-setup-a-new-vpn/" target="_blank" rel="noopener"
+>如何配置一台新的翻墙服务器&lt;/a> 中配置 bbr 的部分，那边一起打开了系统的网络流量转发能力，这样那台机器就可以作为子网的一个跳板机了，只要在启动 tailscale 的时候使用命令 &lt;code>sudo tailscale up --advertise-routes=192.168.2.0/24&lt;/code> 即可广播 192.168.2.0/24 的访问都通过这台机器做转发。然后去到 tailscale &lt;a class="link" href="https://login.tailscale.com/admin/machines" target="_blank" rel="noopener"
+>Admin Console&lt;/a> 点击三个点-Edit route settings 打开 Subnet routes 即可使其它他节点启用这个路由规则。而在需要访问此子网段的机器上需要手动执行一次 &lt;code>sudo tailscale up --accept-routes&lt;/code> 以注册同意使用子网段的路由规则。&lt;/p>
+&lt;blockquote>
+&lt;p>有些人也会选择直接在路由器上面装上 wireguard/tailscale 实现对内网的访问，但网络问题太过复杂，且排查起来非常麻烦，因此我的考虑是在路由器（OpenWRT）上尽量少引入变量（尤其是会全局改变一些配置的），以实现最大的稳定性。&lt;/p>
+&lt;/blockquote>
+&lt;p>&lt;img src="https://blog.d0zingcat.dev/p/tailscale-intro/lan.png"
+width="2402"
+height="264"
+srcset="https://blog.d0zingcat.dev/p/tailscale-intro/lan_hue4bde7cb3db03195983b42a7eb9fa95b_53964_480x0_resize_box_3.png 480w, https://blog.d0zingcat.dev/p/tailscale-intro/lan_hue4bde7cb3db03195983b42a7eb9fa95b_53964_1024x0_resize_box_3.png 1024w"
+loading="lazy"
+class="gallery-image"
+data-flex-grow="909"
+data-flex-basis="2183px"
+>&lt;/p>
+&lt;p>&lt;img src="https://blog.d0zingcat.dev/p/tailscale-intro/enable.png"
+width="1026"
+height="664"
+srcset="https://blog.d0zingcat.dev/p/tailscale-intro/enable_hu5bcff3318abe0d1424dbeb09b20b3895_84396_480x0_resize_box_3.png 480w, https://blog.d0zingcat.dev/p/tailscale-intro/enable_hu5bcff3318abe0d1424dbeb09b20b3895_84396_1024x0_resize_box_3.png 1024w"
+loading="lazy"
+class="gallery-image"
+data-flex-grow="154"
+data-flex-basis="370px"
+>&lt;/p>
+&lt;p>换言之，这样我就可以在公司电脑上通过 192.168.2.111（假设是家中 mac 设备的ip地址）访问了。&lt;/p>
+&lt;p>另外也推荐打开 Tailscale 的 MagicDNS 和 Nameserver 并启用 Overwrite local DNS，前者用于通过机器名称解析出内网 IP，后者用于强制 DNS Upstream 走公用可靠的服务，这样可以有效避免一些非验证 DNS 的错误记录导致的奇奇怪怪的网络问题，但代价就是本地一些解析可能会失效（例如 路由器的一些 *.lan 域名）。&lt;/p>
+&lt;p>&lt;img src="https://blog.d0zingcat.dev/p/tailscale-intro/dns.png"
+width="1764"
+height="1426"
+srcset="https://blog.d0zingcat.dev/p/tailscale-intro/dns_hue8cab1a8541e33520ec7e4a7f67b32e4_192088_480x0_resize_box_3.png 480w, https://blog.d0zingcat.dev/p/tailscale-intro/dns_hue8cab1a8541e33520ec7e4a7f67b32e4_192088_1024x0_resize_box_3.png 1024w"
+loading="lazy"
+class="gallery-image"
+data-flex-grow="123"
+data-flex-basis="296px"
+>&lt;/p>
+&lt;p>&lt;strong>2023-05-14&lt;/strong>&lt;/p>
+&lt;p>在实际使用的时候我发现即便有 UPNP，但当局域网内存在两个装了 tailscale 的设备之后就会存在两个同样的端口 41641，当暴露在公网上之后因为冲突就会有一个端口为 41642（典型的碰撞），暂时观察无法确定这种是否也能够实现半程的直连，所以为了减少变量我还是选择给路由器（openWRT）安装上了 tailscale，教程如：&lt;a class="link" href="https://openwrt.org/docs/guide-user/services/vpn/tailscale/start" target="_blank" rel="noopener"
+>Tailscale&lt;/a>，可以留意到在这个教程中创建了 tailscale 这个空间，和 lan 做转发的时候配置了防火墙策略，做了 masquerade（其实就是 SNAT 成 tailscale 的接口 IP，也就是 100.64.xxx.xxx），换言之，外部流量从 WAN 到 LAN 的时候会被自动转换 SNAT。
+&lt;img src="https://blog.d0zingcat.dev/p/tailscale-intro/upnp.png"
+width="1928"
+height="486"
+srcset="https://blog.d0zingcat.dev/p/tailscale-intro/upnp_hu57c57d2ed69002feb7e414385e440d05_89279_480x0_resize_box_3.png 480w, https://blog.d0zingcat.dev/p/tailscale-intro/upnp_hu57c57d2ed69002feb7e414385e440d05_89279_1024x0_resize_box_3.png 1024w"
+loading="lazy"
+class="gallery-image"
+data-flex-grow="396"
+data-flex-basis="952px"
+>&lt;/p>
+&lt;p>&lt;strong>2023-08-29&lt;/strong>&lt;/p>
+&lt;p>之前我使用的时候并没有发现可能存在的一个问题是我的主路由上安装了 openclash 作为全家的翻墙透明代理，这个 app 控制了一些网络行为，可能存在一些 iptables 的规则做了一些 SNAT 的操作，理论上来讲通过之前的配置访问局域网的时候 Source IP 应该是 100.64.xxx.xxx 可能局域网内有些服务会校验从而丢弃这个流量。但由于最近调整了家庭的网络拓扑，现在使用了 PVE 中虚拟机跑 openwrt，里面安装 shellclash 作为旁路由（主路由中配置 DHCP options）来实现的代理，无法复现之前的场景，因此此处也不再多进行深究。而这次调整之后可以发现公司电脑无法通过 tailscale 的内网地址连接家中的 macbook，所以需要自己在主路由上进行 SNAT 规则的配置。按照下面图片进行配置在 &lt;code>/etc/config/firewall&lt;/code> 中即可，dest_ip 改成实际自己的 lan 网段，snat_ip 使用局域网的网关地址即可，这样就可以实现从公司电脑通过 tailscale 访问家中的 macbook 了。
+&lt;img src="https://blog.d0zingcat.dev/p/tailscale-intro/snat_op.png"
+width="1412"
+height="977"
+srcset="https://blog.d0zingcat.dev/p/tailscale-intro/snat_op_hu47e34371a34ba567c3cbe2fadaca12ae_105038_480x0_resize_box_3.png 480w, https://blog.d0zingcat.dev/p/tailscale-intro/snat_op_hu47e34371a34ba567c3cbe2fadaca12ae_105038_1024x0_resize_box_3.png 1024w"
+loading="lazy"
+alt="Alt text"
+class="gallery-image"
+data-flex-grow="144"
+data-flex-basis="346px"
+>&lt;/p>
+&lt;h1 id="参考">参考&lt;/h1>
+&lt;p>&lt;a class="link" href="https://tailscale.com/kb/1054/dns/?tab=macos#using-dns-settings-in-the-admin-console" target="_blank" rel="noopener"
+>DNS in Tailscale&lt;/a>&lt;/p>
+&lt;p>&lt;a class="link" href="https://tailscale.com/kb/1081/magicdns/" target="_blank" rel="noopener"
+>MagicDNS&lt;/a>&lt;/p></description></item><item><title>如何配置一台新的翻墙服务器</title><link>https://blog.d0zingcat.dev/p/how-to-setup-a-new-vpn/</link><pubDate>Mon, 08 May 2023 15:02:57 +0800</pubDate><guid>https://blog.d0zingcat.dev/p/how-to-setup-a-new-vpn/</guid><description>&lt;p>对我而言，配置一台新的用于翻墙的服务器大概步骤如下：&lt;/p>
+&lt;ul>
+&lt;li>购买&amp;amp;配置&lt;/li>
+&lt;li>安装必备软件
+&lt;ul>
+&lt;li>&lt;code>apt update &amp;amp;&amp;amp; apt install -y vim nload htop sudo nodejs npm&lt;/code>&lt;/li>
+&lt;li>&lt;code>npm i -g pm2&lt;/code>&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>配置新账户
+&lt;ul>
+&lt;li>adduser 交互式添加&lt;/li>
+&lt;li>&lt;code>usermod -aG sudo {username}&lt;/code>&lt;/li>
+&lt;li>免密登陆 &lt;code>vim /etc/sudoers&lt;/code> Add &lt;code>{username} ALL=(ALL) NOPASSWD: ALL&lt;/code>&lt;/li>
+&lt;li>配置密钥登陆 &lt;code>ssh-keygen&lt;/code>
+&lt;ul>
+&lt;li>添加 &lt;code>.ssh/authorized_keys&lt;/code>&lt;/li>
+&lt;li>设置权限 &lt;code>chmod 600 .ssh/authorized_keys&lt;/code>&lt;/li>
+&lt;li>贴入自己的公钥&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>重新登陆&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>设置ssh config &lt;code>vim /etc/ssh/sshd_config&lt;/code>
+&lt;ul>
+&lt;li>修改登录port为高位端口 &lt;code>Port {port}&lt;/code>&lt;/li>
+&lt;li>关闭root的password login &lt;code>PermitRootLogin prohibit-password&lt;/code>&lt;/li>
+&lt;li>重启&lt;code>systemctl restart sshd&lt;/code>&lt;/li>
+&lt;li>重启之前需要先检查服务器是否启用了 firewalld 或者 iptables ，避免因为防火墙原因无法链接，也需要检查一下云服务商是否也有类似于防火墙的设置，有的话放行端口&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>配置bbr
+&lt;ul>
+&lt;li>&lt;code>vim /etc/sysctl.conf&lt;/code>
+&lt;ul>
+&lt;li>添加 &lt;code>net.core.default_qdisc=fq&lt;/code>&lt;/li>
+&lt;li>&lt;code>net.ipv4.tcp_congestion_control=bbr&lt;/code>&lt;/li>
+&lt;li>&lt;code>net.ipv4.ip_forward=1&lt;/code>&lt;/li>
+&lt;li>&lt;code>net.ipv6.conf.all.forwarding=1&lt;/code>&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>&lt;code>sysctl -p&lt;/code> 生效&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>这两步不一定必须，现在我更喜欢用 docker 来管理我所有的服务
+&lt;ul>
+&lt;li>配置gost
+&lt;ul>
+&lt;li>&lt;code>wget https://github.com/go-gost/gost/releases/download/v3.0.0-rc7/gost_3.0.0-rc7_linux_amd64.tar.gz&lt;/code>
+&lt;ul>
+&lt;li>&lt;code>tar zxvf xxx &amp;amp;&amp;amp; mv gost /usr/local/bin&lt;/code>&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>wiki &lt;a class="link" href="https://gost.run/tutorials/protocols/ss/" target="_blank" rel="noopener"
+>&lt;code>https://gost.run/tutorials/protocols/ss/&lt;/code>&lt;/a>&lt;/li>
+&lt;li>github &lt;code>https://github.com/go-gost/gost&lt;/code>&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>配置pm2
+&lt;ul>
+&lt;li>
+&lt;p>&lt;code>mkdir pm2 &amp;amp;&amp;amp; cd pm2 &amp;amp;&amp;amp; pm2 init&lt;/code>&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>贴入关键配置 &lt;code>gost -L ss+ssu://chacha20-ietf-poly1305:{password}@:8338&lt;/code>&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>&lt;code>pm2 start&lt;/code>&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>&lt;code>pm2 startup&lt;/code>&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>&lt;code>pm2 save&lt;/code>&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>配置log rotate&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">pm2 install pm2-logrotate
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">pm2 &lt;span class="nb">set&lt;/span> pm2-logrotate:max_size 50M
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">pm2 &lt;span class="nb">set&lt;/span> pm2-logrotate:retain &lt;span class="m">10&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">pm2 &lt;span class="nb">set&lt;/span> pm2-logrotate:compress &lt;span class="nb">true&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;/li>
+&lt;li>
+&lt;p>shortcuts &lt;code>pm2 ls / pm2 log/ pm2 monit&lt;/code>&lt;/p>
+&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>安装 docker
+&lt;ul>
+&lt;li>&lt;code>curl -fsSL https://get.docker.com | bash&lt;/code>&lt;/li>
+&lt;li>&lt;code>systemctl start docker &amp;amp;&amp;amp; systemctl enable docker &amp;amp;&amp;amp; usermod -aG docker $USER &amp;amp;&amp;amp; exit&lt;/code>&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>docker 中启动 gost
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;span class="lnt">15
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-fallback" data-lang="fallback">&lt;span class="line">&lt;span class="cl">---
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">version: &amp;#34;3.8&amp;#34;
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">services:
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> gost:
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> container_name: gost
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> image: gogost/gost
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> networks:
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> - my_network
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> command:
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> - -L
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> - ss+ssu://chacha20-ietf-poly1305:xxx@:3388
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> ports:
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> - 3388:3388/tcp
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> - 3388:3388/udp
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> restart: unless-stopped
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;/li>
+&lt;li>安装tailscale
+&lt;ul>
+&lt;li>&lt;code>curl -fsSL https://tailscale.com/install.sh | sh&lt;/code>&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>更新openclash
+&lt;ul>
+&lt;li>&lt;code>https://github.com/vernesong/OpenClash/releases&lt;/code>&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>配置代理链
+&lt;ul>
+&lt;li>&lt;a class="link" href="https://xiaorun.me/f672d5a3f4484c7ca098d99f8c98e453" target="_blank" rel="noopener"
+>https://xiaorun.me/f672d5a3f4484c7ca098d99f8c98e453&lt;/a>&lt;/li>
+&lt;li>&lt;a class="link" href="https://t.me/QuanX_API/133" target="_blank" rel="noopener"
+>https://t.me/QuanX_API/133&lt;/a>&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>流媒体测速
+&lt;ul>
+&lt;li>&lt;code>bash &amp;lt;(curl -L -s check.unlock.media)&lt;/code>&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ul></description></item><item><title>使用VPN组建局域网打通工作和家庭网络</title><link>https://blog.d0zingcat.dev/p/vpn-connect-work-home/</link><pubDate>Fri, 20 Jan 2023 21:46:54 +0800</pubDate><guid>https://blog.d0zingcat.dev/p/vpn-connect-work-home/</guid><description>&lt;blockquote>
+&lt;p>本教程已经失效，只能作为参考，关于我最新的组网方法请参考这篇文章：&lt;a class="link" href="https://blog.d0zingcat.dev/p/tailscale-intro/" target="_blank" rel="noopener"
+>Tailscale Intro&lt;/a>&lt;/p>
+&lt;/blockquote>
+&lt;h1 id="写在前面">写在前面&lt;/h1>
+&lt;p>没错，我又开始写教程了。非常排斥写教程的原因是：&lt;/p>
+&lt;ol>
+&lt;li>之前写太多了&lt;/li>
+&lt;li>多数教程都是对Google来的内容的提纯和综合，拼凑而成的四不像而已&lt;/li>
+&lt;li>这种劳动并不会创造实质性的价值（只有可能会给别人减少一定找到正确答案的时间成本吧）
+但是最近开始重新思考，发现可能问题并不是在写教程这件事情上，或者换句话说其实写教程没什么错的，但是不能只把眼光放在解决一个问题上面，转而应该对一类问题/事务进行总结，这样可能才能把多个零散的事情串联起来。&lt;/li>
+&lt;/ol>
+&lt;h1 id="正文">正文&lt;/h1>
+&lt;p>最近结束了长达6个月的WFH以及1个多月的感染新冠居家，正式开始去外面打工了。公司的IT设施并没有很完善，权限管理也比较松，并没有提供一个公网能够访问公司内网的VPN，但我个人有一台常用的电脑（出门都带着），公司电脑我会放在公司做远程紧急解决问题使用，因此出于这个需求我得自己搭建一套内网穿透的方案。&lt;/p>
+&lt;p>其实这个问题之前以及解决过很多次了，无外乎frp为代表的内网传统工具、zerotier为代表的异地组网方案或者以team viewer为代表的外部解决方案。这些方案的共通点是都可以解决我远程的需要，以及都是在对端电脑无法获取公网IP或者是无法配置端口转发/DMZ的情况下的无奈之举。
+但Frp的问题在于配置麻烦，且端口转发需要单独配置具体的端口还是不方便；
+zerotier是虚拟组网，但是在国内planet节点都被屏蔽了，UDP也被ISP限制，自己也需要搭建Moon节点才能完成比较舒服的访问速度，虽然支持各种高级的玩法也有界面可以直接管理，各个平台都有支持但我会比较介意：&lt;/p>
+&lt;ol>
+&lt;li>商业软件没有开源，也许哪天就收费了或者改免费计划的配额了&lt;/li>
+&lt;li>虽然提供了各种NAT打洞的能力和真P2P的网络体验，但是真的太复杂了，很容易在折腾过程中搞坏原先的网络，且不好排查问题
+而team viewer的问题就更加明显了，商业化软件，不加鸡腿就限速控制体验，且之前有过安全问题；而同类型的Any Desk、国内也有仿冒的ToDesk的问题基本上要么是访问速度贼慢（两台Mac之间屏幕共享控制明显卡顿），要么就是各种快捷键映射有问题为代表的小问题，且无法得到有效解决。
+使用下来会发现还是mac原生的屏幕共享程序互相连接下控制是最为流畅的（虽然使用的是5900端口但其实协议是苹果自研的或者可能基于VNC改良的，虽然比不上微软黑科技RDP但也不遑多让），因此还是考虑直接做组网，这样开放端口可以自己控制，也能保证LAN中设备的安全性。&lt;/li>
+&lt;/ol>
+&lt;p>本来准备尝试Tinc这个老牌的VPN，&lt;a class="link" href="https://stdrc.cc/post/2021/05/04/setup-tinc-network/" target="_blank" rel="noopener"
+>这边&lt;/a>是个不错的教程。但我走到最后发现mac已经废弃了tuntap组件，因此在mac上安装tinc变成了伪命题，于是继续调研的情况下发现了wireguard（早有耳闻，在搞ipv6的时候就有用到cloudflare的warp，就是基于wireguard来实现的），就决定尝一下螃蟹，起码社区非常活跃、代码提交也很频繁，不像tinc最后一次代码更改还是22年6月了。&lt;/p>
+&lt;p>经过规划之后，我的网段的划分如下：&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;span class="lnt">15
+&lt;/span>&lt;span class="lnt">16
+&lt;/span>&lt;span class="lnt">17
+&lt;/span>&lt;span class="lnt">18
+&lt;/span>&lt;span class="lnt">19
+&lt;/span>&lt;span class="lnt">20
+&lt;/span>&lt;span class="lnt">21
+&lt;/span>&lt;span class="lnt">22
+&lt;/span>&lt;span class="lnt">23
+&lt;/span>&lt;span class="lnt">24
+&lt;/span>&lt;span class="lnt">25
+&lt;/span>&lt;span class="lnt">26
+&lt;/span>&lt;span class="lnt">27
+&lt;/span>&lt;span class="lnt">28
+&lt;/span>&lt;span class="lnt">29
+&lt;/span>&lt;span class="lnt">30
+&lt;/span>&lt;span class="lnt">31
+&lt;/span>&lt;span class="lnt">32
+&lt;/span>&lt;span class="lnt">33
+&lt;/span>&lt;span class="lnt">34
+&lt;/span>&lt;span class="lnt">35
+&lt;/span>&lt;span class="lnt">36
+&lt;/span>&lt;span class="lnt">37
+&lt;/span>&lt;span class="lnt">38
+&lt;/span>&lt;span class="lnt">39
+&lt;/span>&lt;span class="lnt">40
+&lt;/span>&lt;span class="lnt">41
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-plain" data-lang="plain">&lt;span class="line">&lt;span class="cl"> +------------------------------+
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> | Work |
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> | +---------------------+ |
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> | | Macbook Air | |
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> | | | |
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> | | 172.30.0.3 wg | |
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> | | | |
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> | | 192.168.1.X eth0 | |
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> | | | |
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> | | | |
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> | +---------------------+ |
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> | |
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> | |
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> | |
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> | |
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> +------------+-----------------+
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> |
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">+-------------------------------+ +---------+---------+ +----------------------------+
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">| Home | | | | Portable |
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">| 172.30.0.0/24 | | tencent cloud | | |
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">| | | | | +---------------------+ |
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">| +-----------------+ | | wg | | | Macbook pro | |
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">| | Jumper | | | | | | | |
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">| | | +-------+ +------+ | 172.30.0.2 wg | |
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">| | 172.30.0.4 wg | | | 172.30.0.1 | | | | |
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">| | | | | | | | 192.168.2.X/24 | |
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">| | | | +---------+---------+ | | | |
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">| | | | | | | 10.0.0.X/24 | |
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">| | | | | | +---------------------+ |
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">| +--------+--------+ | | | |
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">| | | | | +---------------------+ |
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">| | | +---------+----------+ | | Other | |
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">| +--------+---------+ | | | | | | |
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">| | Other | | | VPN | | | 172.30.0.X wg | |
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">| | | | | | | | | |
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">| | 192.168.2.X | | | 172.30.0.0/24 | | | | |
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">| | | | | | | | | |
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">| | LAN | | | | | | | |
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">| +------------------+ | | | | +---------------------+ |
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">| | | | | |
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">+-------------------------------+ +--------------------+ +----------------------------+
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>其实结构很简单，所有的机器流量都通过腾讯云的轻量云服务器（有公网IP）进行转发，以此来联通工作、家庭、携带设备的网络。满足这个需求的配置可以参考下面的教程：
+&lt;a class="link" href="https://devld.me/2020/07/27/wireguard-setup/" target="_blank" rel="noopener"
+>使用 WireGuard 无缝接入内网&lt;/a>&lt;/p>
+&lt;p>关于具体的步骤不进行赘述,只是需要注意一下公网的服务器检查一下云厂商的防火墙是否放行(wireguard是UDP)，服务器、局域网转发服务器（如果有和我同样的需求）的iptables是否放行，服务器是否开启iv4的转发。
+这边仅贴出我的配置：&lt;/p>
+&lt;p>&lt;strong>公网服务器&lt;/strong>&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;span class="lnt">15
+&lt;/span>&lt;span class="lnt">16
+&lt;/span>&lt;span class="lnt">17
+&lt;/span>&lt;span class="lnt">18
+&lt;/span>&lt;span class="lnt">19
+&lt;/span>&lt;span class="lnt">20
+&lt;/span>&lt;span class="lnt">21
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-ini" data-lang="ini">&lt;span class="line">&lt;span class="cl">&lt;span class="k">[Interface]&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># Name = qcloud&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="na">Address&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="s">172.30.0.1/24&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="na">ListenPort&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="s">31820&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="na">PrivateKey&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="s">ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="k">[Peer]&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">#Name = macbookpro&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="na">PublicKey&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="s">ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="na">AllowedIPs&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="s">172.30.0.2/32&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="k">[Peer]&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">#Name = macbookair&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="na">PublicKey&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="s">ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="na">AllowedIPs&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="s">172.30.0.3/32&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="k">[Peer]&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">#Name = debian.lan&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="na">PublicKey&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="s">ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="na">AllowedIPs&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="s">172.30.0.4/32&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="na">AllowedIPs&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="s">192.168.2.1/24&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>&lt;strong>内网转发机&lt;/strong>&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-ini" data-lang="ini">&lt;span class="line">&lt;span class="cl">&lt;span class="k">[Interface]&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="na">PrivateKey&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="s">ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="na">Address&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="s">172.30.0.4/32&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="na">ListenPort&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="s">31820&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="na">PostUp&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="s">iptables -t nat -A POSTROUTING -s 172.30.0.0/24 -j MASQUERADE&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="na">PostDown&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="s">iptables -t nat -D POSTROUTING -s 172.30.0.0/24 -j MASQUERADE&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="k">[Peer]&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="na">PublicKey&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="s">ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="na">AllowedIPs&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="s">172.30.0.0/24&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="na">Endpoint&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="s">101.43.1.1:31820&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="na">PersistentKeepalive&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="s">25&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>&lt;strong>其他机器，以携带行型设备为例&lt;/strong>&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;span class="lnt">6
+&lt;/span>&lt;span class="lnt">7
+&lt;/span>&lt;span class="lnt">8
+&lt;/span>&lt;span class="lnt">9
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-ini" data-lang="ini">&lt;span class="line">&lt;span class="cl">&lt;span class="k">[Interface]&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="na">PrivateKey&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="s">ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="na">Address&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="s">172.30.0.2/32&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="k">[Peer]&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="na">PublicKey&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="s">ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="na">AllowedIPs&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="s">172.30.0.0/24&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="na">AllowedIPs&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="s">192.168.2.0/24&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="na">Endpoint&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="s">101.43.1.1:31820&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>值得一提的是在Jumper机上需要添加两条iptables的规则：&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-ini" data-lang="ini">&lt;span class="line">&lt;span class="cl">&lt;span class="na">PostUp&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="s">iptables -t nat -A POSTROUTING -s 172.30.0.0/24 -j MASQUERADE&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="na">PostDown&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="s">iptables -t nat -D POSTROUTING -s 172.30.0.0/24 -j MASQUERADE&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>PostUp表示为在wg0的虚拟网卡上线、添加完路由之后会自动执行的hook，PostDown则是wg0虚拟网卡下线移除完路由的时候自动执行的hook，这台机器的主要作用是对于&lt;code>172.30.0.0/24&lt;/code>的网段的流量（转发到了这台机器），把流量转发到这台机器的网卡上，然后转交到对应的dest上。如果没有这个规则的化流量转发到目标机器上之后无法找到回程的IP（比如网关192.168.2.1并不知道172.30.0.0/24具体是在什么位置，所以在包从Jumper机发出之前需要通过SNAT把source IP转换成本机的局域网IP。&lt;code>MASQUERADE&lt;/code>等于&lt;code>-j SNAT --to-source 192.168.2.5&lt;/code>，也就是会自动获取网卡的IP然后设置，也比较适合只有动态IP或者做了DDNS的机器。如果有多个网卡也可以用 &lt;code>-o eth0&lt;/code> 指定出口网卡。关于SNAT和DNAT可以看&lt;a class="link" href="https://www.xiexianbin.cn/linux/network/basic/dnat-and-snat/index.html" target="_blank" rel="noopener"
+>这个文章&lt;/a>。同时也强烈推荐这个系列的教程&lt;sup id="fnref:1">&lt;a href="#fn:1" class="footnote-ref" role="doc-noteref">1&lt;/a>&lt;/sup>，对于会有全新的理解。&lt;/p>
+&lt;p>但这样的方案也是有缺陷的，如果这样一台电脑进入到了我的局域网，&lt;code>192.168.2.0/24&lt;/code>的流量还会去公网上绕一圈回来在jumper上再转发一次，其实并不是很好的做法（因此这个规则其实比较适合公司的电脑（因为大多数情况下不会带回家）），而公司想要访问例如openwrt进行管理（http://192.168.2.1，例如远程帮家人调整翻墙的节点）就可以通过网址直接访问即可。&lt;/p>
+&lt;h1 id="思考和改进">思考和改进&lt;/h1>
+&lt;p>可以发现，wireguard并不适合大规模的组网，因为配置起来太过于麻烦（尤其是不做公网IP的服务器作为流量中转的情况下，每新增一个peer之前的服务器都得再配置一次），也不支持NAT打洞，更加不支持自适应的流量转发、多节点作为流量中转的场景，要实现这些能力还是得看zerotier（可能tailscale也可以做到，但是我并没有做调研）。不过考虑到自己的需求也非常有限，就继续保持这套方案跑着了，结构简单也好维护。&lt;/p>
+&lt;p>而我的家庭网络是有公网IP的，所以也有在思考也许可以携带区的电脑、工作区的电脑可以直接和Jumper P2P相连（Jumper的Endpoint通过openwrt的端口转发暴露在公网上），以此来实现绕过流量中转服务器（毕竟有上限，比如我的是4M上行）,但是这样就意味着Jumper机需要对特定的IP路由到特定的Peer，而网段中其他的IP则维持路由到中转服务器上。从方案上来讲看起来是可以操作的， 不过并没有实际去操作，也许会等实际需求产生的时候会再折腾。&lt;/p>
+&lt;h1 id="20230126-更新">2023.01.26 更新&lt;/h1>
+&lt;p>实际测试下来mac的桌面共享如果走这一套转发打洞方案基本是可行的，偶有卡顿但基本以及可用了。但不折腾会死的我还是选择继续优化看看，能不能更进一步地得到更好的体验。
+通过观察我上面提供的配置可以发现之前的解决方案是星型的，也就是&lt;code>qcloud&lt;/code>机器上面配置了所有的机器peer，其他端点的机器都只配置一个 &lt;code>AllowedIPs = 172.30.0.0/24&lt;/code> 到这台机器上，也就是说不论是&lt;code>172.30.0/24&lt;/code> 还是&lt;code>192.168.2/24&lt;/code> 的流量都会经过 &lt;code>qcloud&lt;/code> 这台机器的中转，然后只是转发到对应的机器上或是再转发到&lt;code>debian.lan&lt;/code>机器上再做一次局域网内部的转发。那么很容易想到再做一次网状的网络调整，让&lt;code>macbookair&lt;/code>这台机器上配置&lt;code>debian.lan&lt;/code>这个机器作为额外的peer，endpoint为家庭公网地址和对应的转发端口，把&lt;code>AllowedIPs = 192.168.2.0/24&lt;/code>的配置从&lt;code>qcloud&lt;/code> peer的配置移到这边，在&lt;code>debian.lan&lt;/code>机器上添加&lt;code>macbookair&lt;/code>这台机器作为peer即可完成在中转的同时有一根直连的线路。&lt;/p>
+&lt;p>实际尝试下来发现会存在一些问题，最大的问题在于如果配置了两个peer却对应了不同的endpoint，wireguard存在一些机制（可能是内置漫游）&lt;sup id="fnref:2">&lt;a href="#fn:2" class="footnote-ref" role="doc-noteref">2&lt;/a>&lt;/sup>，但具体的机制并不能很快的了解到，这边仅做一下提醒，带来的现象就是即便配置文件中两个peer配置的是不同的endpoint，在连接后两个peer会对应到同一个endpoint，且有时是&lt;code>qcloud&lt;/code>有时是&lt;code>debian.lan&lt;/code>。都变成前面一个之后就会导致&lt;code>192.168.2.0/24&lt;/code>的网段无法正常访问；如果是都变成后面一个那么就会导致&lt;code>172.30.0.0/24&lt;/code>中只有&lt;code>debian.lan&lt;/code>这台机器可以被访问到，但哪种情况都不是我所希望达到的最后的效果。&lt;/p>
+&lt;h2 id="思考">思考&lt;/h2>
+&lt;p>合理猜测可能是无法在有中继服务器的情况下同时使用这个网段中的两个IP作为P2P连接的两端，在查阅了很多资料却还是无法得到我想要的答案之后，我退了一步选择了再单独配置一个新的网段，也就是说，我新建了一个 &lt;code>wg1.conf&lt;/code> 文件，对应了新的网段 &lt;code>172.29.0.0/24&lt;/code>，&lt;code>debian.lan&lt;/code> 作为服务器，&lt;code>macbookair&lt;/code>作为客户端，连接家庭网络的公网地址（及对应的转发端口,且配置家庭网段&lt;code>192.168.2.0/24&lt;/code>在这套虚拟网络的&lt;code>AllowedIPs&lt;/code>中）即可解决两个网段互不影响正常访问的目的。虽然很丑陋，但确实能解决问题。直接连接家庭网络中的机器作为中转后，远程桌面的体验明显得到提升，响应速度肉眼可见的提升了（顺滑了很多，也少了很多卡顿），总算达到了我预期的效果。暂时会先使用这个方案，等到后面对wireguard有了更深的了解或是发现了新的解决办法之后，会再次尝试优化，本次就到这了。&lt;/p>
+&lt;p>可能有人会问为什么不能直接端口转发到家庭网络的mac上，直接通过公网ip和远程桌面端口进行访问，一样能达到远程访问的效果？没错，这样确实也能解决我的需求，但我考虑三个点：&lt;/p>
+&lt;ol>
+&lt;li>不想固定家中的mac的IP地址（不然DHCP变化后就端口转发就失效了，要么固定要么到时候再想办法改端口转发）&lt;/li>
+&lt;li>不想暴露VNC/SSH端口到公网上，存在比较明显的特征容易被爆破&lt;/li>
+&lt;li>如果我需要访问家里的路由器/NAS，我会希望公司电脑的浏览器上能直接访问，而非再套一层VNC&lt;/li>
+&lt;/ol>
+&lt;div class="footnotes" role="doc-endnotes">
+&lt;hr>
+&lt;ol>
+&lt;li id="fn:1">
+&lt;p>&lt;a class="link" href="https://www.zsythink.net/archives/category/%e8%bf%90%e7%bb%b4%e7%9b%b8%e5%85%b3/iptables" target="_blank" rel="noopener"
+>iptables&lt;/a>&amp;#160;&lt;a href="#fnref:1" class="footnote-backref" role="doc-backlink">&amp;#x21a9;&amp;#xfe0e;&lt;/a>&lt;/p>
+&lt;/li>
+&lt;li id="fn:2">
+&lt;p>&lt;a class="link" href="https://cloud.tencent.com/developer/article/1985788" target="_blank" rel="noopener"
+>WireGuard 系列文章（二）：WireGuard 简介 - 快速、现代、安全的 V** 隧道&lt;/a>&amp;#160;&lt;a href="#fnref:2" class="footnote-backref" role="doc-backlink">&amp;#x21a9;&amp;#xfe0e;&lt;/a>&lt;/p>
+&lt;/li>
+&lt;/ol>
+&lt;/div></description></item></channel></rss>

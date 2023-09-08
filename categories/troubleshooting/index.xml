@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Troubleshooting on For(;;)</title><link>https://blog.d0zingcat.dev/categories/troubleshooting/</link><description>Recent content in Troubleshooting on For(;;)</description><generator>Hugo -- gohugo.io</generator><language>zh-cn</language><lastBuildDate>Sat, 08 Oct 2022 12:38:24 +0800</lastBuildDate><atom:link href="https://blog.d0zingcat.dev/categories/troubleshooting/index.xml" rel="self" type="application/rss+xml"/><item><title>Clash DNS failed 问题解决</title><link>https://blog.d0zingcat.dev/p/clash-dns-failed-troubleshooting/</link><pubDate>Sat, 08 Oct 2022 12:38:24 +0800</pubDate><guid>https://blog.d0zingcat.dev/p/clash-dns-failed-troubleshooting/</guid><description>&lt;p>问题的表现是同样两个的节点（一个是日本的JPOS_1机房，一个是香港的IPLC线路，正常来讲这两个节点在上海/江苏应该都可以访问且延迟是比较低的，而考虑到江苏的网络情况推断日本的节点表现会更加好），日本节点在上海能够正常访问，但回了江苏之后就无法访问了，节点测试 fail ；而使用香港节点虽然可以正常访问，但速度非常缓慢。&lt;/p>
+&lt;p>本以为是的 ClashX Pro的问题，但发现手机上的QuantumultX两个节点延迟都是50+ms的延迟，而且访问速度很快。删除ClashX Pro重装ClashX并不能解决问题。
+进一步排查问题，查看日志可以看到的很关键的一条：&lt;/p>
+&lt;p>&lt;code>all DNS requests failed, first error: dial tcp4 1.1.1.1:53&lt;/code>&lt;/p>
+&lt;p>且观察到IP解析出来都是198.18 ，&lt;code>Enhanced Mode Config-DNS Mode&lt;/code> 是 &lt;code>fake-ip&lt;/code> 。考虑到在家里的翻墙方式是R2S的软路由透明代理实现的，且用了Fake-IP的模式，为了尽量避免麻烦和不必要的影响因素，即便fake-ip可以加速代理的速度（节约一次解析DNS的时间），也把ClashX Pro的DNS Mode 改成 Mapping，这样可以保证不在家的情况下使用ClashX 解析出来的结果都是正常的IP而不是软件中的fake-ip，这样尽可能分离开两个fake-ip模式下会有的理解上的不一致（即便可能ClashX Pro的DNS Mode也选fake-ip也不会存在问题，但毕竟没有尝试过）。&lt;/p>
+&lt;p>当改变了这个设置之后，发现原先配置的节点域名可以正常解析到自己本来的IP而不是fake-ip了，但问题还是存在，访问极慢且提示1.1.1.1的53解析失败了。尝试着把配置中的dns直接关掉也不能解决问题，于是一个一个路径地注释&lt;code>1.1.1.1&lt;/code> 最后发现是 &lt;code>fallback&lt;/code> 中的地址链接失败了。
+配置为&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;span class="lnt">15
+&lt;/span>&lt;span class="lnt">16
+&lt;/span>&lt;span class="lnt">17
+&lt;/span>&lt;span class="lnt">18
+&lt;/span>&lt;span class="lnt">19
+&lt;/span>&lt;span class="lnt">20
+&lt;/span>&lt;span class="lnt">21
+&lt;/span>&lt;span class="lnt">22
+&lt;/span>&lt;span class="lnt">23
+&lt;/span>&lt;span class="lnt">24
+&lt;/span>&lt;span class="lnt">25
+&lt;/span>&lt;span class="lnt">26
+&lt;/span>&lt;span class="lnt">27
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-plain" data-lang="plain">&lt;span class="line">&lt;span class="cl">dns:
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> enable: true
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> listen: 0.0.0.0:7874
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> ipv6: false
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> enhanced-mode: fake-ip
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> fake-ip-range: 198.18.0.1/16
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> nameserver:
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> - 114.114.114.114
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> - https://1.1.1.1/dns-query
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> - 180.168.255.118
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> - 116.228.111.18
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> - 119.29.29.29
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> - https://doh.pub/dns-query
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> - https://dns.alidns.com/dns-query
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> fallback:
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> - tcp://1.1.1.1
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> fallback-filter:
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> geoip: true
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> ipcidr:
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> - 240.0.0.0/4
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> default-nameserver:
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> - 114.114.114.114
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> - 119.29.29.29
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> - 180.168.255.118
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> - 116.228.111.18
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> fake-ip-filter:
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> - &amp;#34;*.binance.com&amp;#34;
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>根据这个帖子&lt;sup id="fnref:1">&lt;a href="#fn:1" class="footnote-ref" role="doc-noteref">1&lt;/a>&lt;/sup>可以明白clash的解析逻辑是并发请求&lt;code>nameserver&lt;/code>和&lt;code>fallback&lt;/code>中的所有的dns服务器，拿到最快的一个结果看是否是的CN的IP，如果不是则返回&lt;code>fallback&lt;/code>中的解析最快的一个的结果（不是很理解这个逻辑，如果这样的话&lt;code>fallback&lt;/code>被投毒（不确定可行性）或者连不通不就会导致代理存在问题么？就像我这次碰到的问题一样）。telnet一下可以发现确实在江苏无法正常连通 &lt;code>1.1.1.1&lt;/code> 这个IP的53端口，至此问题已经确认，那么需要做的就很简单，通过查阅一些别人的配置我在&lt;code>fallback&lt;/code> 中新增了两个 DNS 服务：&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-plain" data-lang="plain">&lt;span class="line">&lt;span class="cl">dns:
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">  enable: true
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">  listen: 0.0.0.0:7874
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">  ipv6: false
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">  enhanced-mode: fake-ip
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">  fake-ip-range: 198.18.0.1/16
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">  nameserver:
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">    - 114.114.114.114
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">    - https://1.1.1.1/dns-query
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">  fallback:
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">    - tcp://1.1.1.1
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">    - https://public.dns.iij.jp/dns-query
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">    - https://doh.pub/dns-query
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>再次尝试之后发现果然在江苏不论是哪个节点都可以正常翻墙，且访问速度非常快，所有网页都能很快打开。&lt;/p>
+&lt;h1 id="参考">参考&lt;/h1>
+&lt;p>&lt;a class="link" href="https://hellodk.cn/post/870" target="_blank" rel="noopener"
+>记一次解决 clash all DNS requests failed, context deadline exceeded 问题&lt;/a>&lt;/p>
+&lt;p>&lt;a class="link" href="https://github.com/Dreamacro/clash/issues/642" target="_blank" rel="noopener"
+>[疑问]dns中fallback的作用&lt;/a>&lt;/p>
+&lt;p>&lt;a class="link" href="https://cosey.me/p/clash-fallback-filter.html" target="_blank" rel="noopener"
+>在 Clash 中 DNS 解析行为和 fallback-filter 的一点理解&lt;/a>&lt;/p>
+&lt;p>&lt;a class="link" href="https://blog.skk.moe/post/what-happend-to-dns-in-proxy/" target="_blank" rel="noopener"
+>浅谈在代理环境中的 DNS 解析行为&lt;/a>&lt;/p>
+&lt;p>&lt;a class="link" href="https://github.com/Fndroid/clash_for_windows_pkg/wiki/DNS%E6%B1%A1%E6%9F%93%E5%AF%B9Clash%EF%BC%88for-Windows%EF%BC%89%E7%9A%84%E5%BD%B1%E5%93%8D" target="_blank" rel="noopener"
+>DNS污染对Clash（for Windows）的影响&lt;/a>&lt;/p>
+&lt;p>&lt;a class="link" href="https://github.com/Dreamacro/clash/issues/857" target="_blank" rel="noopener"
+>[Feature]希望可以由用户显式设置 Nameserver 和 Fallback DNS 是否通过代理来解析域名 #857&lt;/a>&lt;/p>
+&lt;p>&lt;a class="link" href="https://s1oz.github.io/post/clash-tian-jia-doh-jie-xi/" target="_blank" rel="noopener"
+>clash添加doh解析&lt;/a>&lt;/p>
+&lt;p>&lt;a class="link" href="https://github.com/vernesong/OpenClash/wiki/DNS%E8%AE%BE%E7%BD%AE" target="_blank" rel="noopener"
+>DNS设置&lt;/a>&lt;/p>
+&lt;p>&lt;a class="link" href="https://github.com/Dreamacro/clash/issues/621#issuecomment-614702773" target="_blank" rel="noopener"
+>[Feature] 添加根据CNAME指向的FQDN匹配规则&lt;/a>&lt;/p>
+&lt;p>&lt;a class="link" href="https://github.com/Dreamacro/clash/wiki" target="_blank" rel="noopener"
+>Home&lt;/a>&lt;/p>
+&lt;p>&lt;a class="link" href="https://lancellc.gitbook.io/clash/clash-config-file/dns" target="_blank" rel="noopener"
+>DNS&lt;/a>&lt;/p>
+&lt;div class="footnotes" role="doc-endnotes">
+&lt;hr>
+&lt;ol>
+&lt;li id="fn:1">
+&lt;p>&lt;a class="link" href="https://github.com/Dreamacro/clash/issues/968" target="_blank" rel="noopener"
+>[疑问]有关clash dns 解析中fallback组的意义的疑问&lt;/a>&amp;#160;&lt;a href="#fnref:1" class="footnote-backref" role="doc-backlink">&amp;#x21a9;&amp;#xfe0e;&lt;/a>&lt;/p>
+&lt;/li>
+&lt;/ol>
+&lt;/div></description></item></channel></rss>

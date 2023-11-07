@@ -14,6 +14,10 @@ draft: false
 
 > 通过这篇文章我会持续更新一些我种草的或者已经买了的书籍，以及一些我想学习的东西。我会同步更新一些我学习过程中的笔记，但需要说明的是笔记是每个人知识结构化的中间过程，是每个人查漏补缺的工具，所以我认为笔记并不具备通用性，根据每个人自己先验知识的不同笔记可能会天差地远，因此每个人应该通过自己的学习来总结得到自己的笔记。
 
+## [Helm 学习指南](https://www.amazon.co.jp/-/en/%E9%A9%AC%E7%89%B9%C2%B7%E6%B3%95%E9%87%8C%E7%BA%B3-MattFarina-%E4%B9%94%E4%BB%80%C2%B7%E5%A4%9A%E5%88%A9%E8%8C%A8%E5%9F%BA-JoshDolitsky-MattButcher/dp/711168995X)
+
+通过这本书先对 helm 有了一个全局的了解，没有记录笔记，可以直接在得到上面看。
+
 ### [The Unix Workbench](https://seankross.com/the-unix-workbench/working-with-unix.html)
 
 *学习 Unix-like System 和 Shell Scripting 最好的入门读物，非常基础但非常实用，适合初学者。也可以配套 coursera 的教程一起食用：[The Unix Workbench](https://www.coursera.org/learn/unix/home/week/1)*

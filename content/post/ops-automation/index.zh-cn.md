@@ -88,6 +88,7 @@ virtualmachines:
       become: true
       apt:
         name:
+          - curl
           - htop
           - acl
           - nload
@@ -106,7 +107,6 @@ virtualmachines:
         name: "{{ user }}"
         shell: /bin/bash
         generate_ssh_key: yes
-        groups: "{{ user }},sudo"
     - name: "Add authorized keys"
       become: true
       authorized_key:
@@ -116,6 +116,7 @@ virtualmachines:
       become: true
       shell:
         cmd: |
+          set -ex
           iptables -F
           iptables -X
           iptables -P INPUT ACCEPT
@@ -139,6 +140,7 @@ virtualmachines:
           curl -fsSL https://tailscale.com/install.sh | bash
           curl -fsSL https://get.docker.com | bash
           systemctl enable docker
+          usermod -aG sudo {{ user }}
           usermod -aG docker {{ user }}
       register: result
     - name: Copy docker compose
@@ -175,7 +177,7 @@ virtualmachines:
 经过上面的操作之后事情就比较简单了，剩下我需要手动做的事情还有：
 - 添加本地的 ssh config
 - 连接到对应的服务器
-  - 重启 sshd 使配置文件生效
+  - 重启 sshd 使配置文件生效 `sudo systemctl restart sshd`
   - 启动 docker compose，也就是 `docker compose up -d`
   - 登陆 tailscale `sudo tailscale up --accept-routes`
   - 添加 /etc/hosts 保证 hostname 有解析

@@ -7,6 +7,7 @@ math:
 license: 
 hidden: false
 comments: true
+slug: learning-list
 categories: ['Journal']
 tags: ['learn', 'read']
 draft: false

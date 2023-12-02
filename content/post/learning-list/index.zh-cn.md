@@ -100,7 +100,7 @@ draft: false
 
 # 教程
 
-### [The Unix Workbench](https://seankross.com/the-unix-workbench/working-with-unix.html)
+## [The Unix Workbench](https://seankross.com/the-unix-workbench/working-with-unix.html)
 
 *学习 Unix-like System 和 Shell Scripting 最好的入门读物，非常基础但非常实用，适合初学者。也可以配套 coursera 的教程一起食用：[The Unix Workbench](https://www.coursera.org/learn/unix/home/week/1)*
 

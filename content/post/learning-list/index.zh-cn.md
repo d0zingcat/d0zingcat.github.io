@@ -16,9 +16,9 @@ draft: false
 > 通过这篇文章我会持续更新一些我种草的或者已经买了的书籍，以及一些我想学习的东西。我会同步更新一些我学习过程中的笔记，但需要说明的是笔记是每个人知识结构化的中间过程，是每个人查漏补缺的工具，所以我认为笔记并不具备通用性，根据每个人自己先验知识的不同笔记可能会天差地远，因此每个人应该通过自己的学习来总结得到自己的笔记。
 
 
-# 书籍
+## 书籍
 
-## [鼠疫](https://book.douban.com/subject/24257229/) @2023-12-03
+### [鼠疫](https://book.douban.com/subject/24257229/) @2023-12-03
 
 以医生里厄的视角讲述了一场突如其来的鼠疫，22年上海疫情封城的时候看到有人推荐了这本书，最近终于读完了
 - 比绝望更糟糕的是习惯绝望
@@ -26,7 +26,7 @@ draft: false
 - 只能说作者真的厉害，完全把一场灾难会带来的影响、政府的措施、人们的心态、事态的走向都描绘得活灵活现，非常符合逻辑和我经历的事实
 - 留下深刻印象的人物是一开始居高临下但慢慢地融入到了人群中单还是不愿意看医生的神父、一心追求孤傲高洁不愿审判别人的塔鲁、默默承受一切不愿意跟人诉说的医生、一切向往爱情和自由开始只想逃离后来却坚定地加入志愿队的记者、平日里人人喊打却在疫情混的风生水起的混混等等，人物都非常饱满立体，非常有画面感
 
-## [囚徒的困境](https://book.douban.com/subject/26741238/) @2023-12-01
+### [囚徒的困境](https://book.douban.com/subject/26741238/) @2023-12-01
 
 - 一本不错的了解冯诺依曼生平的书 可以当作名人传记来读 人物有血有肉 活灵活现 非常精彩
 	- 只能说神童在海外接受的教育是不会出现伤仲永的情况的，天才永远都会发光发热；尤其是冯诺依曼这种
@@ -42,7 +42,7 @@ draft: false
 - 美元拍卖的例子似乎也在广告竞拍中有看到遍体鳞伤 这种二价损失的规则会无限抬高拍卖价
 
 
-## [重返美丽新世界](https://book.douban.com/subject/33474397/) @2023-11-29
+### [重返美丽新世界](https://book.douban.com/subject/33474397/) @2023-11-29
 
 - 药性十分猛烈 值得看第二遍第三遍甚至更多 是一本难得的好事
 	- 因为少了很多隐喻和想象 很多理论和逻辑都是作者直接摆在明面上解析的 因此非常容易理解
@@ -66,7 +66,7 @@ draft: false
 	- （事实上，根据佛教徒的观点，我们中的大部分人一直半睡半醒，像梦游者般度过一生，听从别人的指示。觉悟就是完全的醒觉，而“佛陀”这个词可以翻译为“醒觉者”。）
 - 思想控制的受害者不知道自己是受害者。对于他来说，监狱的高墙是看不见的，他以为自己是自由的。只有别人才知道他并不自由。他的奴役完全是客观性的。
 
-## [美丽新世界](https://book.douban.com/subject/27002046/) @2023-11-27
+### [美丽新世界](https://book.douban.com/subject/27002046/) @2023-11-27
 
 夸张的想象和极度怪异的新世界
 
@@ -78,7 +78,7 @@ draft: false
 - 不敢想象这是上世纪三十年代写的科幻小说 观察犀利 想象丰富 
 
 
-## [学习的本质](https://book.douban.com/subject/26580132/) @2023-11-19
+### [学习的本质](https://book.douban.com/subject/26580132/) @2023-11-19
 
 - 学习需要动机和兴趣 兴趣是最好的老师 所以需要激发学习的动机 
 - 差生一样应该被老师关照和正向的激励 例如一些管理职责 来调度起积极性
@@ -90,7 +90,7 @@ draft: false
 - 实践课程是很好的一种教学实践
 - 现代以及未来信息量越来越爆炸 因此如何采集知识挑选提炼知识会成为最核心的竞争力
 
-## [动物农场](https://book.douban.com/subject/4908879/) @2023-10-07
+### [动物农场](https://book.douban.com/subject/4908879/) @2023-10-07
 
 乔治奥威尔在80年前就已经写好了假社会主义/极权主义最后会走向的结局
 
@@ -98,10 +98,31 @@ draft: false
 
 通过这本书先对 helm 有了一个全局的了解，没有记录笔记，可以直接在得到上面看。
 
+### 计算机书单
 
-# 教程
+1.《计算机程序的构造和解释》(SICP) - 由Harold Abelson、Gerald Jay Sussman和Julie Sussman合著的经典教材，深入浅出地讲解了计算机程序设计的基本原理，是一本极具启发性的书籍。
 
-## [The Unix Workbench](https://seankross.com/the-unix-workbench/working-with-unix.html)
+2.《算法导论》(Introduction to Algorithms) - 由Thomas H. Cormen、Charles E. Leiserson、Ronald L. Rivest和Clifford Stein合著，是一本全面介绍算法设计和分析的权威性教材，广泛被计算机科学的学生和专业人士所采用。
+
+3.《深入理解计算机系统》(Computer Systems: A Programmer's Perspective) - 由Randal E. Bryant和David R. O'Hallaron合著，帮助读者理解计算机底层系统的工作原理和编程技巧。
+
+4.《编程珠玑》(The Pragmatic Programmer) - 由Andrew Hunt和David Thomas合著，涵盖了实用的编程技巧、设计原则和项目管理建议，是一本广受欢迎的实用型计算机书籍。
+
+5.《人工智能：一种现代方法》(Artificial Intelligence: A Modern Approach) - 由Stuart Russell和Peter Norvig合著，是一本广泛引用的人工智能教科书，全面涵盖了AI的各个方面。
+
+6.《计算机网络：自顶向下方法》(Computer Networking: A Top-Down Approach) - 由James F. Kurose和Keith W. Ross合著，以自顶向下的方式解释计算机网络的概念和协议。
+
+7.《Clean Code: A Handbook of Agile Software Craftsmanship》 - 由Robert C. Martin撰写，强调编写清晰、可维护和高质量代码的重要性，是一本在软件开发社区广受推崇的书籍。
+
+8.《代码大全》(Code Complete) - 由Steve McConnell撰写，是一本涵盖软件构建过程中最佳实践的经典著作。
+
+9.《设计模式：可复用面向对象软件的基础》(Design Patterns: Elements of Reusable Object-Oriented Software) - 四位作者Erich Gamma、Richard Helm、Ralph Johnson和John Vlissides一同创作的书籍，介绍了常见的软件设计模式。
+
+10.《黑客与画家》(Hackers & Painters) - 由Paul Graham撰写，该书探讨了编程、创新和技术的关系，对程序员和创业者都有很大启发。
+
+## 教程
+
+### [The Unix Workbench](https://seankross.com/the-unix-workbench/working-with-unix.html)
 
 *学习 Unix-like System 和 Shell Scripting 最好的入门读物，非常基础但非常实用，适合初学者。也可以配套 coursera 的教程一起食用：[The Unix Workbench](https://www.coursera.org/learn/unix/home/week/1)*
 
@@ -146,26 +167,9 @@ draft: false
 	- `u` for user, `g` for group, `a` for everyone and `o` for everyone else
 	- ops: `+` `-` `=`
 
-以及下面的书单是 GPT 告诉我的：
 
-1.《计算机程序的构造和解释》(SICP) - 由Harold Abelson、Gerald Jay Sussman和Julie Sussman合著的经典教材，深入浅出地讲解了计算机程序设计的基本原理，是一本极具启发性的书籍。
+## 公开课
 
-2.《算法导论》(Introduction to Algorithms) - 由Thomas H. Cormen、Charles E. Leiserson、Ronald L. Rivest和Clifford Stein合著，是一本全面介绍算法设计和分析的权威性教材，广泛被计算机科学的学生和专业人士所采用。
+### [公平与正义](https://www.bilibili.com/video/BV1KV411H7JD/?vd_source=fbb6e052be517db70546ce89c8b64067)
 
-3.《深入理解计算机系统》(Computer Systems: A Programmer's Perspective) - 由Randal E. Bryant和David R. O'Hallaron合著，帮助读者理解计算机底层系统的工作原理和编程技巧。
-
-4.《编程珠玑》(The Pragmatic Programmer) - 由Andrew Hunt和David Thomas合著，涵盖了实用的编程技巧、设计原则和项目管理建议，是一本广受欢迎的实用型计算机书籍。
-
-5.《人工智能：一种现代方法》(Artificial Intelligence: A Modern Approach) - 由Stuart Russell和Peter Norvig合著，是一本广泛引用的人工智能教科书，全面涵盖了AI的各个方面。
-
-6.《计算机网络：自顶向下方法》(Computer Networking: A Top-Down Approach) - 由James F. Kurose和Keith W. Ross合著，以自顶向下的方式解释计算机网络的概念和协议。
-
-7.《Clean Code: A Handbook of Agile Software Craftsmanship》 - 由Robert C. Martin撰写，强调编写清晰、可维护和高质量代码的重要性，是一本在软件开发社区广受推崇的书籍。
-
-8.《代码大全》(Code Complete) - 由Steve McConnell撰写，是一本涵盖软件构建过程中最佳实践的经典著作。
-
-9.《设计模式：可复用面向对象软件的基础》(Design Patterns: Elements of Reusable Object-Oriented Software) - 四位作者Erich Gamma、Richard Helm、Ralph Johnson和John Vlissides一同创作的书籍，介绍了常见的软件设计模式。
-
-10.《黑
-
-客与画家》(Hackers & Painters) - 由Paul Graham撰写，该书探讨了编程、创新和技术的关系，对程序员和创业者都有很大启发。
+### [聆听音乐](https://www.bilibili.com/video/BV1sW411a7nM/?vd_source=fbb6e052be517db70546ce89c8b64067)

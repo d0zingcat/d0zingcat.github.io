@@ -7,6 +7,8 @@ math:
 license: 
 hidden: false
 comments: true
+categories: ['Reading']
+tags: ['book', 'review', 'reading']
 draft: false
 ---
 

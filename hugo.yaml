@@ -142,3 +142,9 @@ markup:
     lineNos: true
     # noClasses: false
     style: monokai
+
+outputs:
+  home:
+    - HTML
+    - RSS
+    - JSON # necessary for search

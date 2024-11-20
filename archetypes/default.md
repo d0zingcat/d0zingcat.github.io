@@ -1,5 +1,5 @@
 ---
-author: ["d0zingcat"]
+author: ["Me"]
 title: '{{ replace .File.ContentBaseName "-" " " | title }}'
 date: {{ .Date }}
 categories: []

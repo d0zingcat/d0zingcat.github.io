@@ -12,6 +12,9 @@ buildExpired: false
 
 googleAnalytics: G-MY3GGDV2J6
 
+pagination:
+  pagerSize: 5
+
 minify:
   disableXML: true
   minifyOutput: true
@@ -76,7 +79,11 @@ params:
   # home-info mode
   homeInfoParams:
     Title: "Hi there \U0001F44B"
-    Content: You think today is just another day in your life. It’s not just another day. It’s the one day that is given to you — today. It’s a gift. It’s the only gift that you have right now, and the only appropriate response is gratefulness.
+    Content: |
+      💡You think today is just another day in your life. 
+      It’s not just another day. It’s the one day that is given to you — today. 
+      It’s a gift. 
+      It’s the only gift that you have right now, and the only appropriate response is gratefulness.
 
   socialIcons:
     - name: x
@@ -139,7 +146,7 @@ markup:
     # anchorLineNos: true
     codeFences: true
     guessSyntax: true
-    lineNos: true
+    lineNos: false
     # noClasses: false
     style: monokai
 

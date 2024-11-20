@@ -1,2 +1,2 @@
 # d0zingcat.github.io
-Blog to die.
+[Blog](https://d0zingcat.github.io/) to die.

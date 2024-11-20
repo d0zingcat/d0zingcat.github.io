@@ -1,17 +1,20 @@
 ---
-title: "My 1st post"
-date: 2020-09-15T11:30:03+00:00
+author: ["d0zingcat"]
+title: '{{ replace .File.ContentBaseName "-" " " | title }}'
+date: {{ .Date }}
+description: ""
+summary: ""
+categories: []
+tags: []
+ShowToc: false
+TocOpen: false
+series: []
+draft: true
 # weight: 1
 # aliases: ["/first"]
-tags: ["first"]
-author: "Me"
 # author: ["Me", "You"] # multiple authors
-showToc: true
-TocOpen: false
-draft: false
 hidemeta: false
 comments: false
-description: "Desc Text."
 canonicalURL: "https://canonical.url/to/page"
 disableHLJS: true # to disable highlightjs
 disableShare: false

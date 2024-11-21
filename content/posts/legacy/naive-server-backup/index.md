@@ -1,7 +1,7 @@
 ---
 author: ["Me"]
 title: 'Naive Server Backup'
-date: 2024-11-20T16:07:04+08:00
+date: 2024-04-30T16:07:04+08:00
 categories: ["Technology", "Server Management"]
 tags: ["backup", "server", "minio", "rclone", "s3"]
 draft: false

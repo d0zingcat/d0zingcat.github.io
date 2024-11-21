@@ -1,7 +1,7 @@
 ---
 author: ["Me"]
 title: 'K8s on Bare metal: Teleport by helm'
-date: 2024-11-20T16:20:43+08:00
+date: 2024-05-20T16:20:43+08:00
 categories: ["Home Lab", "Kubernetes"]
 tags: ["k8s", "teleport", "helm", "bare metal"]
 draft: false

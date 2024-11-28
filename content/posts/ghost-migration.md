@@ -1,11 +1,11 @@
-```yaml
+---
 author: ["Me"]
 title: 'Ghost Migration'
 date: 2024-11-27T08:10:35+08:00
 tags: ["Ghost", "Migration", "K8s", "Docker"]
 categories: ["DevOps"]
 draft: false
-```
+---
 
 # Migration from Ghost(Docker) to Ghost(K8s)
 

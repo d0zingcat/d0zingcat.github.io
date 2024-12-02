@@ -7,7 +7,7 @@ tags: ["chatgpt", "openai", "openrouter", "kubernetes"]
 draft: false
 ---
 
-The Claude is quite difficult to get onboard, as you have to prepare a phone number and a credit card. Also, if you subscribe to the Pro plan, you will only get access the the Claude model(it's quite powerful). But I prefer more choices, I want to use different models under different circumstances, e.g. I want to use Claude when I am coding, use OpenAI o1 to to math or reasoning or gpt-3.5-turbo to do translation. On this point, I use [OpenRouter](https://openrouter.ai/).
+The Claude is quite difficult to get onboard, as you have to prepare a phone number and a credit card. Also, if you subscribe to the Pro plan, you will only get access the the Claude model(it's quite powerful). But I prefer more choices, I want to use different models under different circumstances, e.g. I want to use Claude when I am coding, use OpenAI o1 to to math or reasoning or gpt-3.5-turbo to do translation. On this point, I use [OpenRouter](https://openrouter.ai/). You can top up your balance by your Crypto(like USDC), which takes less tax fees.
 
 You can find the latest/popular models here: [Rankings](https://openrouter.ai/rankings/programming?view=week), 
 for programming, there's no double that people are using claude/sonnet-3.5 mostly. 

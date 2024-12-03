@@ -1,6 +1,6 @@
 ---
 author: ["Me"]
-title: 'Host My Own Chatgpt'
+title: 'Host My Own ChatGPT'
 date: 2024-11-29T20:59:49+08:00
 categories: ["AI", "Self-Hosted"]
 tags: ["chatgpt", "openai", "openrouter", "kubernetes"]

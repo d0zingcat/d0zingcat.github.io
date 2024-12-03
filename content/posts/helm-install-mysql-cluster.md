@@ -1,6 +1,6 @@
 ---
 author: ["Me"]
-title: 'Helm Install Mysql Cluster'
+title: 'Helm Install MySQL Cluster'
 date: 2024-11-29T20:16:59+08:00
 categories: ["Database", "Kubernetes"]
 tags: ["mysql", "helm", "k8s"]

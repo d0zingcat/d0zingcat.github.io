@@ -1,6 +1,6 @@
 ---
 author: ["Me"]
-title: 'Postgresql Ha Cluster'
+title: 'Postgresql HA Cluster'
 date: 2024-12-13T16:40:54+08:00
 categories: ["Kubernetes", "Postgresql"]
 tags: ["Postgresql", "Kubernetes", "CloudNativePG", "HA Cluster", "Backup", "Recovery", "pgbench", "Monitoring", "Prometheus", "Grafana"]

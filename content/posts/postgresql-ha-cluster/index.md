@@ -12,7 +12,7 @@ draft: false
 
 Active community, high stars, fancy solution, tailored for K8s. An introduction: 
 [4,300 GitHub Stars and Counting: CloudNativePG Now the World’s \#1 PostgreSQL Operator for Kubernetes](https://www.enterprisedb.com/blog/4300-github-stars-and-counting-cloudnativepg-now-worlds-1-postgresql-operator-kubernetes)
-![](image.png)
+![](./assets/image.png)
 
 ## Installation
 Installation by Helm: [cloudnative-pg/charts: CloudNativePG Helm Charts](https://github.com/cloudnative-pg/charts)

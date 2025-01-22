@@ -180,3 +180,33 @@ You can easily find the fallbacks of this choice:
 
 - No community support(They don't accept any PRs and they don't event have an Issues page, they only ask you to open a bug on their bug tracker)
 - The operator is based on Python, which means not easy to extend
+
+### Percona XtraDB Cluster
+
+It's quite facinating to me as it says: 
+
+> Percona XtraDB Cluster (PXC) is a 100% open source, enterprise-grade, highly available clustering solution for MySQL multi-master setups based on Galera.PXC helps enterprises minimize unexpected downtime and data loss, reduce costs, and improve performance and scalability of your database environments supporting your critical business applications in the most demanding public, private, and hybrid cloud environments.
+
+And from the Percona Server for MySQL it also mentions PXC:
+
+> As of today, we recommend using Percona Operator for MySQL based on Percona XtraDB Cluster, which is production-ready and contains everything you need to quickly and consistently deploy and scale MySQL clusters in a Kubernetes-based environment, on-premises or in the cloud.
+
+Which means it's a good choice if you want to use the Percona XtraDB Cluster to manage your MySQL cluster.
+
+I appreciate the highlights of the Percona XtraDB Cluster:
+
+- Production-ready
+- Open to community
+- Multi-master replication, each node can accept any request
+- Has backup solution
+- Fully compatible with MySQL Server Community Edition 8.0 
+
+However, it also has some downsides:
+
+- Whenever provisioning a new node, it will copy the full data set
+- Limitations 
+  - LOCK/UNLOCK TABLES clause is not supported
+  - Each table should have a primary key or same query on different replica may cause cardinary disorder
+  - Other... Not quite important to me as I don't use it
+
+

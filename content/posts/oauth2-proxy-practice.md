@@ -4,7 +4,7 @@ title: 'OAuth2 Proxy Practice'
 date: 2025-01-22T20:12:59+08:00
 categories: ["kubernetes", "oauth2-proxy"]
 tags: ["oauth2-proxy", "kubernetes", "prometheus", "alertmanager"]
-draft: true
+draft: false
 ---
 
 # Introduction
